@@ -17,7 +17,6 @@ export default function App() {
       quality: 1,
     });
     if (!result.canceled) {
-      console.log(result);
       setCurrentImg({ uri: result.assets[0].uri });
     }
   };
@@ -42,13 +41,13 @@ export default function App() {
             <TouchableOpacity style={styles.button} onPress={pickImageAsync}>
               <Text style={styles.text}>Upload Photo</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => switchToCamera}>
+            <TouchableOpacity style={styles.button} onPress={() => setCameraVisible(true)}>
               <Text style={styles.text}>Take Photo</Text>
             </TouchableOpacity>
             <StatusBar style="auto" />
           </View>
         }
-        {(isPermissionGranted && cameraVisible) &&
+        {cameraVisible &&
           <CameraDisplay permission={permission} requestionPermission={requestPermission}></CameraDisplay>
         }
     </View>
