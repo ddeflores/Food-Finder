@@ -28,11 +28,9 @@
     },
     "plugins": [
       [
-        "expo-media-library",
+        "expo-camera",
         {
-          "photosPermission": "Allow FoodFiner to access your photos.",
-          "savePhotosPermission": "Allow FoodFinder to save photos.",
-          "isAccessMediaLocationEnabled": true
+          "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
         }
       ]
     ]
