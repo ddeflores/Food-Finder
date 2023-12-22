@@ -1,9 +1,16 @@
+import React, { useState } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Button, Image, StyleSheet, Text, Touchable, TouchableOpacity, View } from 'react-native';
-import {camera, cameraType} from 'expo-camera';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
+import CameraDisplay from './components/CameraDisplay';
+import { Camera, CameraType } from 'expo-camera';
 
 export default function App() {
+  const placeholder = require('./placeholder.png');
+  const [cameraVisible, setCameraVisible] = useState(false);
+  const [permission, requestPermission] = Camera.useCameraPermissions();
+  const [currentImg, setCurrentImg] = useState(placeholder);
+
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
@@ -11,21 +18,39 @@ export default function App() {
     });
     if (!result.canceled) {
       console.log(result);
+      setCurrentImg({ uri: result.assets[0].uri });
     }
   };
-  
+
+  function switchToCamera() {
+    if (permission) {
+      setCameraVisible(true);
+    }
+    else {
+      requestPermission();
+    }
+  }
+  const isPermissionGranted = permission?.granted;
+
   return (
-    <View style={styles.container}>
-      <View styles={styles.imageContainer}>
-        <Image source={require('./placeholder.png')} style={styles.img} accessibilityLabel="placeholder image" />
-      </View>
-      <TouchableOpacity style={styles.button} onPress={pickImageAsync}>
-        <Text style={styles.text}>Upload Photo</Text>
-      </TouchableOpacity>
-      <TouchableOpacity style={styles.button} onPress={pickImageAsync}>
-        <Text style={styles.text}>Take Photo</Text>
-      </TouchableOpacity>
-      <StatusBar style="auto" />
+    <View style={{flex: 1}}>
+        {!cameraVisible &&
+          <View style={styles.container}>
+            <View style={styles.imageContainer}>
+              <Image source={currentImg} style={styles.img} accessibilityLabel="placeholder image" />
+            </View>
+            <TouchableOpacity style={styles.button} onPress={pickImageAsync}>
+              <Text style={styles.text}>Upload Photo</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={() => switchToCamera}>
+              <Text style={styles.text}>Take Photo</Text>
+            </TouchableOpacity>
+            <StatusBar style="auto" />
+          </View>
+        }
+        {(isPermissionGranted && cameraVisible) &&
+          <CameraDisplay permission={permission} requestionPermission={requestPermission}></CameraDisplay>
+        }
     </View>
   );
 }
@@ -36,6 +61,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#18191A',
     justifyContent: 'center',
     alignItems: 'center',
+    padding: 70
   },
   button: {
     marginTop: 10,
@@ -48,7 +74,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   imageContainer: {
-    flex: 1,
+    padding: 10
   },
   img : {
     width: 320,
