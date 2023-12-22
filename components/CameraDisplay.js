@@ -2,7 +2,7 @@ import { Camera, CameraType } from 'expo-camera';
 import { useState, useRef } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-function CameraDisplay({ permission, requestionPermission }) {
+function CameraDisplay({ permission, requestionPermission, onPhotoTaken }) {
     const [cameraReady, setCameraReady] = useState(false);
     const cameraRef = useRef(null);
     const [type, setType] = useState(CameraType.back);
@@ -17,6 +17,7 @@ function CameraDisplay({ permission, requestionPermission }) {
 
     const onPictureSaved = photo => {
         console.log(photo);
+        onPhotoTaken(photo.uri);
     };
 
     const onCameraReady = () => {
@@ -27,9 +28,11 @@ function CameraDisplay({ permission, requestionPermission }) {
         return (
             <View style={styles.permissionContainer}>
                 <Text>No Camera Permission</Text>
-                <TouchableOpacity onPress={requestionPermission}>
-                    <Text>Update Permissions</Text>
-                </TouchableOpacity>
+                <View style={styles.buttonContainer}>
+                    <TouchableOpacity style={styles.button} onPress={requestionPermission}>
+                        <Text>Update Permissions</Text>
+                    </TouchableOpacity>
+                </View>
             </View>
         );
     }

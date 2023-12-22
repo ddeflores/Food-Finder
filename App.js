@@ -21,6 +21,11 @@ export default function App() {
     }
   };
 
+  const handlePhotoTaken = (photoUri) => {
+    setCurrentImg({ uri: photoUri });
+    setCameraVisible(false);
+  };
+
   function switchToCamera() {
     if (permission) {
       setCameraVisible(true);
@@ -48,7 +53,11 @@ export default function App() {
           </View>
         }
         {cameraVisible &&
-          <CameraDisplay permission={permission} requestionPermission={requestPermission}></CameraDisplay>
+          <CameraDisplay 
+            permission={permission}
+            requestionPermission={requestPermission}
+            onPhotoTaken={handlePhotoTaken}
+          />
         }
     </View>
   );
