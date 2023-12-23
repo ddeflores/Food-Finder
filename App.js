@@ -1,13 +1,12 @@
 import React, { useState, useEffect, createElement } from 'react';
 import { StatusBar } from 'expo-status-bar';
-import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import CameraDisplay from './components/CameraDisplay';
 import { Camera, CameraType } from 'expo-camera';
 import * as tf from '@tensorflow/tfjs';
 import { bundleResourceIO, decodeJpeg } from '@tensorflow/tfjs-react-native';
 import '@tensorflow/tfjs-react-native';
-import { manipulateAsync, FlipType, SaveFormat } from 'expo-image-manipulator';
 import * as FileSystem from 'expo-file-system';
 
 export default function App() {
@@ -16,42 +15,45 @@ export default function App() {
   const [permission, requestPermission] = Camera.useCameraPermissions();
   const [currentImg, setCurrentImg] = useState(placeholder);
   const [prediction, setPrediction] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [process, setProcess] = useState('');
+  const food_labels = ['Meat', 'Fried Food', 'Dessert', 'Pasta', 'Soup', 'Dairy', 'Egg', 'Fruit/Vegetable', 'Seafood', 'Bread', 'Rice'];
 
   const loadModel = async() => {
+    setPrediction(null);
+    setProcess('Analyzing');
     const modelJson = require('./assets/model.json');
     const modelWeights = require('./assets/group1-shard1of1.bin');
-    const model = await tf.loadLayersModel(
-        bundleResourceIO(modelJson, modelWeights)
-    );
+    const model = await tf.loadLayersModel(bundleResourceIO(modelJson, modelWeights));
     return model;
   }
 
   const transformImageToTensor = async (uri) => {
     const {uri: imageUri} = uri;
-    const img64 = await FileSystem.readAsStringAsync(imageUri, {encoding: FileSystem.EncodingType.Base64})
+    const img64 = await FileSystem.readAsStringAsync(imageUri, {encoding: FileSystem.EncodingType.Base64});
     const imgBuffer =  tf.util.encodeString(img64, 'base64').buffer;
-    const raw = new Uint8Array(imgBuffer);
-    let imgTensor = decodeJpeg(raw)
-    const scalar = tf.scalar(255)
-    imgTensor = tf.image.resizeNearestNeighbor(imgTensor, [128, 128])
-    const tensorScaled = imgTensor.div(scalar)
-    const img = tf.reshape(tensorScaled, [1,128,128,3])
+    let imgTensor = decodeJpeg(new Uint8Array(imgBuffer));
+    const scalar = tf.scalar(255);
+    imgTensor = tf.image.resizeNearestNeighbor(imgTensor, [128, 128]);
+    const tensorScaled = imgTensor.div(scalar);
+    const img = tf.reshape(tensorScaled, [1,128,128,3]);
     return img
   };
-
-
   
-  const makePredictions = async ( batch, model, imagesTensor ) => {
-    const predictionsdata= model.predict(imagesTensor);
-    const {id: pred} = predictionsdata;
-    return pred;
-  }
+
+  function makePredictions(model, imagesTensor) {
+    setProcess('Making predictions');
+    const predictionsTensor = model.predict(imagesTensor);
+    const predictions = predictionsTensor.argMax(-1).dataSync();
+    const predictionsArray = Array.from(predictions);  
+    return predictionsArray;
+  };
 
   const getPredictions = async (image) => {
     await tf.ready();
     const model = await loadModel();
     const tensor_image = await transformImageToTensor(image);
-    const predictions = await makePredictions(1, model, tensor_image);
+    const predictions = await makePredictions(model, tensor_image);
     return predictions;    
 }
 
@@ -70,21 +72,11 @@ export default function App() {
     setCameraVisible(false);
   };
 
-  function switchToCamera() {
-    if (permission) {
-      setCameraVisible(true);
-    }
-    else {
-      requestPermission();
-    }
-  }
-
   useEffect(() => {
     const fetchPredictions = async () => {
       if (currentImg !== placeholder) {
         const predictions = await getPredictions(currentImg);
-        console.log(predictions);
-        setPrediction(predictions.id);
+        setPrediction(food_labels[predictions]);
       }
     };
     fetchPredictions();
@@ -103,6 +95,19 @@ export default function App() {
             <TouchableOpacity style={styles.button} onPress={() => setCameraVisible(true)}>
               <Text style={styles.text}>Take Photo</Text>
             </TouchableOpacity>
+            {(currentImg !== placeholder && !prediction) &&
+              <View style={{marginTop: 10, flexDirection: 'row'}}>
+                <Text style={styles.text}>{process}</Text>
+                <ActivityIndicator size="small" style={{marginLeft: 5}}/>
+              </View>
+            }
+            {prediction &&
+              <View style={{marginTop: 10}}>
+                <Text style={styles.text}>
+                  Prediction: {prediction}
+                </Text>
+              </View>
+            }
             <StatusBar style="auto" />
           </View>
         }
@@ -112,11 +117,6 @@ export default function App() {
             requestionPermission={requestPermission}
             onPhotoTaken={handlePhotoTaken}
           />
-        }
-        {prediction &&
-          <View>
-            <Text>Prediction: {prediction}</Text>
-          </View>
         }
     </View>
   );

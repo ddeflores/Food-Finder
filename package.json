@@ -19,7 +19,7 @@
     "expo-file-system": "~15.4.5",
     "expo-gl": "~13.0.1",
     "expo-gl-cpp": "^11.4.0",
-    "expo-image-manipulator": "^11.5.0",
+    "expo-image-manipulator": "~11.3.0",
     "expo-image-picker": "~14.3.2",
     "expo-media-library": "~15.4.1",
     "expo-status-bar": "~1.6.0",
