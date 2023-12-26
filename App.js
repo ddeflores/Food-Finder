@@ -17,13 +17,17 @@ export default function App() {
   const [prediction, setPrediction] = useState(null);
   const [loading, setLoading] = useState(false);
   const [process, setProcess] = useState('');
-  const food_labels = ['Meat', 'Fried Food', 'Dessert', 'Pasta', 'Soup', 'Dairy', 'Egg', 'Fruit/Vegetable', 'Seafood', 'Bread', 'Rice'];
+  const food_labels = ['Meat', 'Fried Food', 'Dessert', 'Pasta', 'Soup', 'Dairy', 'Egg', 'Fruit/Vegetable', 'Seafood', 'Bread', 'Rice', 'Not Food'];
 
-  const loadModel = async() => {
+  const loadModel = async (jsonPath) => {
     setPrediction(null);
     setProcess('Analyzing');
-    const modelJson = require('./assets/model.json');
-    const modelWeights = require('./assets/group1-shard1of1.bin');
+    let modelJson = require('./assets/isFood.json');
+    let modelWeights = require('./assets/isFoodgroup1-shard1of1.bin');
+    if (jsonPath === 'classifier') {
+      modelJson = require('./assets/model.json');
+      modelWeights = require('./assets/group1-shard1of1.bin');
+    }
     const model = await tf.loadLayersModel(bundleResourceIO(modelJson, modelWeights));
     return model;
   }
@@ -37,7 +41,7 @@ export default function App() {
     imgTensor = tf.image.resizeNearestNeighbor(imgTensor, [128, 128]);
     const tensorScaled = imgTensor.div(scalar);
     const img = tf.reshape(tensorScaled, [1,128,128,3]);
-    return img
+    return img;
   };
   
 
@@ -51,10 +55,17 @@ export default function App() {
 
   const getPredictions = async (image) => {
     await tf.ready();
-    const model = await loadModel();
+    const model = await loadModel('classifier');
+    const isFoodModel = await loadModel('isFood');
     const tensor_image = await transformImageToTensor(image);
-    const predictions = await makePredictions(model, tensor_image);
-    return predictions;    
+    const isFood = await makePredictions(isFoodModel, tensor_image);
+    if (isFood[0] === 1) {
+      return 11;
+    } 
+    else {
+      const predictions = await makePredictions(model, tensor_image);
+      return predictions; 
+    }   
 }
 
   const pickImageAsync = async () => {
