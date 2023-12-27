@@ -74,6 +74,10 @@ export default function App() {
     }
   };
 
+  const handleExit = () => {
+    setCameraVisible(false);
+  }
+
   const handlePhotoTaken = (photoUri) => {
     setCurrentImg({ uri: photoUri });
     setCameraVisible(false);
@@ -123,6 +127,7 @@ export default function App() {
             permission={permission}
             requestionPermission={requestPermission}
             onPhotoTaken={handlePhotoTaken}
+            onExit={handleExit}
           />
         }
     </View>

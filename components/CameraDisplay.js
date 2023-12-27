@@ -2,7 +2,8 @@ import { Camera, CameraType } from 'expo-camera';
 import { useState, useRef } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-function CameraDisplay({ permission, requestionPermission, onPhotoTaken }) {
+function CameraDisplay({ permission, requestionPermission, onPhotoTaken, onExit }) {
+    const placeholder = require('../placeholder.png');
     const [cameraReady, setCameraReady] = useState(false);
     const cameraRef = useRef(null);
     const [type, setType] = useState(CameraType.back);
@@ -44,6 +45,11 @@ function CameraDisplay({ permission, requestionPermission, onPhotoTaken }) {
                 type={type}
                 ref={cameraRef}
                 onCameraReady={onCameraReady}>
+                <View style={styles.exitButton}>
+                    <TouchableOpacity style={styles.exitButton} onPress={onExit}>
+                        <Text style={styles.text}>Exit</Text>
+                    </TouchableOpacity>
+                </View>
                 <View style={styles.buttonContainer}>
                     <TouchableOpacity style={styles.button} onPress={takePicture}>
                         <Text style={styles.text}>Take Photo</Text>
@@ -72,6 +78,11 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       backgroundColor: 'transparent',
       margin: 64,
+    },
+    exitButton: {
+        position: 'absolute',
+        marginTop: 40,
+        marginLeft: 20,
     },
     button: {
       flex: 1,
