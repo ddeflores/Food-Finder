@@ -36,15 +36,19 @@ export default function App() {
     const img64 = await FileSystem.readAsStringAsync(imageUri, {encoding: FileSystem.EncodingType.Base64});
     const imgBuffer =  tf.util.encodeString(img64, 'base64').buffer;
     let imgTensor = decodeJpeg(new Uint8Array(imgBuffer));
-    imgTensor = tf.image.resizeNearestNeighbor(imgTensor, [128, 128]);
-    const img = tf.reshape(imgTensor, [1,128,128,3]);
+    imgTensor = imgTensor.reverse(2);
+    imgTensor = tf.image.resizeBilinear(imgTensor, [128, 128]);
+    imgTensor = imgTensor.div(255.0);
+    const img = tf.reshape(imgTensor, [1, 128, 128, 3]);
     return img;
+
   };
 
   function makePredictions(model, imagesTensor) {
     setProcess('Making predictions');
     const predictionsTensor = model.predict(imagesTensor);
     const predictions = predictionsTensor.argMax(-1).dataSync();
+    console.log(predictions)
     const predictionsArray = Array.from(predictions);  
     return predictionsArray;
   };
