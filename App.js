@@ -15,7 +15,6 @@ export default function App() {
   const [permission, requestPermission] = Camera.useCameraPermissions();
   const [currentImg, setCurrentImg] = useState(placeholder);
   const [prediction, setPrediction] = useState(null);
-  const [loading, setLoading] = useState(false);
   const [process, setProcess] = useState('');
   const food_labels = ['Meat', 'Fried Food', 'Dessert', 'Pasta', 'Soup', 'Dairy', 'Egg', 'Fruit/Vegetable', 'Seafood', 'Bread', 'Rice', 'Not Food'];
 
@@ -23,10 +22,10 @@ export default function App() {
     setPrediction(null);
     setProcess('Analyzing');
     let modelJson = require('./assets/isFood.json');
-    let modelWeights = require('./assets/isFoodgroup1-shard1of1.bin');
+    let modelWeights = require('./assets/isFoodBin.bin');
     if (jsonPath === 'classifier') {
-      modelJson = require('./assets/model.json');
-      modelWeights = require('./assets/group1-shard1of1.bin');
+      modelJson = require('./assets/classifier.json');
+      modelWeights = require('./assets/classifierBin.bin');
     }
     const model = await tf.loadLayersModel(bundleResourceIO(modelJson, modelWeights));
     return model;
@@ -37,13 +36,10 @@ export default function App() {
     const img64 = await FileSystem.readAsStringAsync(imageUri, {encoding: FileSystem.EncodingType.Base64});
     const imgBuffer =  tf.util.encodeString(img64, 'base64').buffer;
     let imgTensor = decodeJpeg(new Uint8Array(imgBuffer));
-    const scalar = tf.scalar(255);
     imgTensor = tf.image.resizeNearestNeighbor(imgTensor, [128, 128]);
-    const tensorScaled = imgTensor.div(scalar);
-    const img = tf.reshape(tensorScaled, [1,128,128,3]);
+    const img = tf.reshape(imgTensor, [1,128,128,3]);
     return img;
   };
-  
 
   function makePredictions(model, imagesTensor) {
     setProcess('Making predictions');
