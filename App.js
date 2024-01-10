@@ -21,6 +21,7 @@ export default function App() {
   const [process, setProcess] = useState('');
   const openai = new OpenAI({apiKey: OPENAI_API_KEY});
 
+  // Loading the binary classifier model
   const loadModel = async (jsonPath) => {
     setPrediction(null);
     setProcess('Analyzing');
@@ -34,27 +35,49 @@ export default function App() {
     return model;
   }
 
+  // Preprocessing images for the model to classify
   const transformImageToTensor = async (uri) => {
+    // Convert URI to base64 string, and then into a tensor
     const {uri: imageUri} = uri;
     const img64 = await FileSystem.readAsStringAsync(imageUri, {encoding: FileSystem.EncodingType.Base64});
     const imgBuffer =  tf.util.encodeString(img64, 'base64').buffer;
     let imgTensor = decodeJpeg(new Uint8Array(imgBuffer));
+    // Change the tensor to BGR format, instead of RGB
     imgTensor = imgTensor.reverse(2);
+    // Resize and normalize the tensor
     imgTensor = tf.image.resizeBilinear(imgTensor, [128, 128]);
     imgTensor = imgTensor.div(255.0);
     const img = tf.reshape(imgTensor, [1, 128, 128, 3]);
     return img;
-
   };
 
+  // Use the model to classify the image as food/nonfood
   function makePredictions(model, imagesTensor) {
     setProcess('Making predictions');
     const predictionsTensor = model.predict(imagesTensor);
+    // Return the most probable instance
     const predictions = predictionsTensor.argMax(-1).dataSync();
     const predictionsArray = Array.from(predictions);  
     return predictionsArray;
   };
 
+  // Gather results from the model, and if the image is of food send an API request for a detailed prediction
+  const getPredictions = async (image) => {
+    await tf.ready();
+    const model = await loadModel('classifier');
+    const isFoodModel = await loadModel('isFood');
+    const tensor_image = await transformImageToTensor(image);
+    const isFood = await makePredictions(isFoodModel, tensor_image);
+    if (isFood[0] === 1) {
+      return 'Not Food';
+    } 
+    else {
+      const predictions = await openai_prediction(image);
+      return predictions;
+    }
+  }
+
+  // Send an API request to determine what kind of food the image is, and how many calories are in it  (from OpenAI docs)
   const openai_prediction = async (uri) => {
     const {uri: imageUri} = uri;
     const base64string = await FileSystem.readAsStringAsync(imageUri, {encoding: FileSystem.EncodingType.Base64});
@@ -78,21 +101,7 @@ export default function App() {
     return response.choices[0].message.content;
   }
 
-  const getPredictions = async (image) => {
-    await tf.ready();
-    const model = await loadModel('classifier');
-    const isFoodModel = await loadModel('isFood');
-    const tensor_image = await transformImageToTensor(image);
-    const isFood = await makePredictions(isFoodModel, tensor_image);
-    if (isFood[0] === 1) {
-      return 'Not Food';
-    } 
-    else {
-      const predictions = await openai_prediction(image);
-      return predictions;
-    }
-  }
-
+  // Expo ImagePicker: allow the user to select an image from their photo library
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       allowsEditing: true,
@@ -103,15 +112,18 @@ export default function App() {
     }
   };
 
+  // Set the view back to upload page when a user exits the camera
   const handleExit = () => {
     setCameraVisible(false);
   }
 
+  // When a photo is taken by a user, upload it to the view
   const handlePhotoTaken = (photoUri) => {
     setCurrentImg({ uri: photoUri });
     setCameraVisible(false);
   };
 
+  // If the current image in view changes, make a prediction on it
   useEffect(() => {
     const fetchPredictions = async () => {
       if (currentImg !== placeholder) {
@@ -122,6 +134,8 @@ export default function App() {
     fetchPredictions();
   }, [currentImg]);
 
+
+  
   return (
     <View style={{flex: 1}}>
         {!cameraVisible &&

@@ -8,6 +8,7 @@ function CameraDisplay({ permission, requestionPermission, onPhotoTaken, onExit 
     const cameraRef = useRef(null);
     const [type, setType] = useState(CameraType.back);
 
+    // Use Expo Camera to access back camera and take a picture
     const takePicture = async () => {
         if (cameraRef.current && cameraReady) {
             const options = { quality: 0.5, base64: true };
@@ -16,15 +17,17 @@ function CameraDisplay({ permission, requestionPermission, onPhotoTaken, onExit 
         }
     };
 
+    // When a picture is taken, pass it to the parent component to be uplaoded (App.js) 
     const onPictureSaved = photo => {
         console.log(photo);
         onPhotoTaken(photo.uri);
     };
 
+    // Wait for device camera to load
     const onCameraReady = () => {
         setCameraReady(true);
     };
-
+    // Make sure camera permissions have been allowed
     if (!permission || !permission.granted) {
         return (
             <View style={styles.permissionContainer}>
