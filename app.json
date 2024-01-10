@@ -15,13 +15,19 @@
       "**/*"
     ],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.ddeflores.foodfinder"
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./placeholder.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ],
+      "package": "com.ddeflores.foodfinder"
     },
     "web": {
       "favicon": "./placeholder.png"
@@ -33,6 +39,12 @@
           "cameraPermission": "Allow $(PRODUCT_NAME) to access your camera."
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "2285a9a8-34d7-4f75-bf50-591f038e5059"
+      }
+    },
+    "owner": "ddeflores"
   }
 }
