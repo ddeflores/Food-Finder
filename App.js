@@ -8,6 +8,9 @@ import * as tf from '@tensorflow/tfjs';
 import { bundleResourceIO, decodeJpeg } from '@tensorflow/tfjs-react-native';
 import '@tensorflow/tfjs-react-native';
 import * as FileSystem from 'expo-file-system';
+import OpenAI from 'openai';
+import 'react-native-url-polyfill/auto';
+import { OPENAI_API_KEY } from '@env';
 
 export default function App() {
   const placeholder = require('./placeholder.png');
@@ -16,7 +19,7 @@ export default function App() {
   const [currentImg, setCurrentImg] = useState(placeholder);
   const [prediction, setPrediction] = useState(null);
   const [process, setProcess] = useState('');
-  const food_labels = ['Meat', 'Fried Food', 'Dessert', 'Pasta', 'Soup', 'Dairy', 'Egg', 'Fruit/Vegetable', 'Seafood', 'Bread', 'Rice', 'Not Food'];
+  const openai = new OpenAI({apiKey: OPENAI_API_KEY});
 
   const loadModel = async (jsonPath) => {
     setPrediction(null);
@@ -48,10 +51,32 @@ export default function App() {
     setProcess('Making predictions');
     const predictionsTensor = model.predict(imagesTensor);
     const predictions = predictionsTensor.argMax(-1).dataSync();
-    console.log(predictions)
     const predictionsArray = Array.from(predictions);  
     return predictionsArray;
   };
+
+  const openai_prediction = async (uri) => {
+    const {uri: imageUri} = uri;
+    const base64string = await FileSystem.readAsStringAsync(imageUri, {encoding: FileSystem.EncodingType.Base64});
+    const response = await openai.chat.completions.create({
+      model: "gpt-4-vision-preview",
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: "What kind of food is in this image? Roughly how many calories are in it? Respond with only the type of food (do not exceed 8 words) and its corresponding number of calories (only the number). Format it like this: Food: \nCalories: \n" },
+            {
+              type: "image_url",
+              image_url: {
+                "url": `data:image/jpeg;base64,${base64string}`,
+              },
+            },
+          ],
+        },
+      ],
+    });
+    return response.choices[0].message.content;
+  }
 
   const getPredictions = async (image) => {
     await tf.ready();
@@ -60,13 +85,13 @@ export default function App() {
     const tensor_image = await transformImageToTensor(image);
     const isFood = await makePredictions(isFoodModel, tensor_image);
     if (isFood[0] === 1) {
-      return 11;
+      return 'Not Food';
     } 
     else {
-      const predictions = await makePredictions(model, tensor_image);
-      return predictions; 
-    }   
-}
+      const predictions = await openai_prediction(image);
+      return predictions;
+    }
+  }
 
   const pickImageAsync = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
@@ -91,7 +116,7 @@ export default function App() {
     const fetchPredictions = async () => {
       if (currentImg !== placeholder) {
         const predictions = await getPredictions(currentImg);
-        setPrediction(food_labels[predictions]);
+        setPrediction(predictions);
       }
     };
     fetchPredictions();
@@ -119,7 +144,7 @@ export default function App() {
             {prediction &&
               <View style={{marginTop: 10}}>
                 <Text style={styles.text}>
-                  Prediction: {prediction}
+                  {prediction}
                 </Text>
               </View>
             }
