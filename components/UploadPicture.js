@@ -11,7 +11,7 @@ import OpenAI from 'openai';
 import 'react-native-url-polyfill/auto';
 import { OPENAI_API_KEY } from '@env';
 
-export default function UploadPicture() {
+export default function UploadPicture({navigation}) {
   const placeholder = require('../placeholder.png');
   const [cameraVisible, setCameraVisible] = useState(false);
   const [permission, requestPermission] = Camera.useCameraPermissions();
@@ -157,7 +157,6 @@ export default function UploadPicture() {
                 </Text>
               </View>
             }
-            <StatusBar style="auto" />
           </View>
         }
         {cameraVisible &&

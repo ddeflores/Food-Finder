@@ -1,33 +1,43 @@
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FIREBASE_AUTH, FIREBASE_PROVIDER } from '../firebaseConfig';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 export default function HomeScreen({navigation}) {
-  
+
+  const onGoogleSignIn = async () => {
+    try {
+      const response = await signInWithPopup(FIREBASE_AUTH, FIREBASE_PROVIDER);
+      console.log(response);
+      const credential = GoogleAuthProvider.credentialFromResult(response);
+      const token = credential.accessToken;
+      const user = response.user;
+    } catch (error) {
+      console.log(error);
+      alert('Sign in failed: ' + error.message);
+    }
+  };
+
   return (
     <View style={{flex: 1}}>
-            <View style={styles.container}>
-              <Text style={styles.title}>
-                FoodFinder
-              </Text>
-              <View style={styles.buttonContainer}>
-                <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
-                  <Text style={styles.text}>
-                    Login
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('SignUp')}>
-                  <Text style={styles.text}>
-                    Sign Up
-                  </Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.button}>
-                  <Text style={styles.text}>
-                    Sign in with Google
-                  </Text>
-                </TouchableOpacity>
-              </View>
-            </View>
-          </View>
+      <View style={styles.container}>
+        <Text style={styles.title}>
+          FoodFinder
+        </Text>
+        <View style={styles.buttonContainer}>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
+            <Text style={styles.text}>
+              Login
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('SignUp')}>
+            <Text style={styles.text}>
+              Sign Up
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </View>
   )
 }
 

@@ -1,9 +1,29 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { FIREBASE_AUTH } from '../firebaseConfig.js';
+import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 
 export default function SignUp({navigation}) {
   const [email, setEmail] = useState(null);
   const [password, setPassword] = useState(null);
+  const [confirmedPassword, setConfirmedPassword] = useState(null);
+
+  function handleSignUp() {
+    if (password === confirmedPassword) {
+      createUserWithEmailAndPassword(FIREBASE_AUTH, email, password).then((userCredential) => {
+        const user = userCredential.user;
+        navigation.reset({index: 0, routes: [{name: 'Upload Picture'}]});
+      }).catch((error) => {
+        const errorCode = error.code;
+        const errorMessage = error.message;
+        alert(errorMessage);
+      });
+    }
+    else {
+      alert('Passwrds do not match!');
+    }
+  }
+  
 
   return (
     <View style={{flex: 1}}>
@@ -14,7 +34,8 @@ export default function SignUp({navigation}) {
         <View style={styles.buttonContainer}>
           <TextInput style={styles.input} placeholder='  Email: ' placeholderTextColor={'white'} onChangeText={newEmail => setEmail(newEmail)} defaultValue={email} autoCapitalize='none' />
           <TextInput style={styles.input} secureTextEntry={true} placeholder='  Password: ' placeholderTextColor={'white'} onChangeText={newPassword => setPassword(newPassword)} defaultValue={password} autoCapitalize='none'/>
-          <TouchableOpacity style={styles.button}>
+          <TextInput style={styles.input} secureTextEntry={true} placeholder='  Confirm Password: ' placeholderTextColor={'white'} onChangeText={newPassword => setConfirmedPassword(newPassword)} defaultValue={confirmedPassword} autoCapitalize='none'/>
+          <TouchableOpacity style={styles.button} onPress={handleSignUp}>
             <Text style={styles.text}>
               Sign Up
             </Text>
