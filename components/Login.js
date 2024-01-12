@@ -1,5 +1,8 @@
+// React and react native imports
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+
+// Local components and configs
 import { signInWithEmailAndPassword } from "firebase/auth";
 import { FIREBASE_AUTH } from '../firebaseConfig';
 
@@ -7,6 +10,7 @@ export default function Login({navigation}) {
   const [email, setEmail] = useState(null);
   const [password, setPassword] = useState(null);
 
+  // Use Firebase auth to sign in, and then redirect to the upload page
   function handleSignIn() {
     signInWithEmailAndPassword(FIREBASE_AUTH, email, password).then((userCredential) => {
       const user = userCredential.user;
@@ -32,6 +36,9 @@ export default function Login({navigation}) {
               Login
             </Text>
           </TouchableOpacity>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.text}>Back</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -56,6 +63,16 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
       alignItems: 'center',
     },
+    backButton: {
+      marginTop: 10,
+      backgroundColor: "#18191A",
+      borderRadius: 18,
+      width: 320,
+      height: '10%',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
     input: {
       marginTop: 10,
       backgroundColor: "#3A3B3C",
@@ -68,7 +85,7 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       color: 'white',
       fontSize: 16,
-      fontWeight: 'bold'
+      fontWeight: '100'
     },
     text: {
       color: "white",

@@ -1,14 +1,20 @@
+// React and react native imports
 import React, { useState, useEffect, createElement } from 'react';
 import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import * as ImagePicker from 'expo-image-picker';
-import CameraDisplay from './CameraDisplay';
-import { Camera, CameraType } from 'expo-camera';
-import * as tf from '@tensorflow/tfjs';
-import { bundleResourceIO, decodeJpeg } from '@tensorflow/tfjs-react-native';
-import '@tensorflow/tfjs-react-native';
+
+// Third party libraries
+import {Camera, useCameraPermissions } from 'expo-camera';
 import * as FileSystem from 'expo-file-system';
+import * as ImagePicker from 'expo-image-picker';
+import * as tf from '@tensorflow/tfjs';
+import '@tensorflow/tfjs-react-native';
+import { bundleResourceIO, decodeJpeg } from '@tensorflow/tfjs-react-native';
 import OpenAI from 'openai';
 import 'react-native-url-polyfill/auto';
+
+// Local components and configurations
+import CameraDisplay from './CameraDisplay';
+import { FIREBASE_DB } from '../firebaseConfig';
 import { OPENAI_API_KEY } from '@env';
 
 export default function UploadPicture({navigation}) {
@@ -133,6 +139,7 @@ export default function UploadPicture({navigation}) {
   
   return (
     <View style={{flex: 1}}>
+{/* When the camera isnt visible, show the menu to upload pictures */}
         {!cameraVisible &&
           <View style={styles.container}>
             <View style={styles.imageContainer}>
@@ -144,12 +151,14 @@ export default function UploadPicture({navigation}) {
             <TouchableOpacity style={styles.button} onPress={() => setCameraVisible(true)}>
               <Text style={styles.text}>Take Photo</Text>
             </TouchableOpacity>
+{/* When a picture is uploaded and no prediction has been made yet, display the loading symbol and current process */}
             {(currentImg !== placeholder && !prediction) &&
               <View style={{marginTop: 10, flexDirection: 'row'}}>
                 <Text style={styles.text}>{process}</Text>
                 <ActivityIndicator size="small" style={{marginLeft: 5}}/>
               </View>
             }
+{/* When a prediction has been made, display it */}
             {prediction &&
               <View style={{marginTop: 10}}>
                 <Text style={styles.text}>
@@ -159,6 +168,7 @@ export default function UploadPicture({navigation}) {
             }
           </View>
         }
+{/* Camera is visible */}
         {cameraVisible &&
           <CameraDisplay 
             permission={permission}
