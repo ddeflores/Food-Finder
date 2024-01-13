@@ -3,43 +3,29 @@ import { useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 
 // Local components and configs
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { FIREBASE_AUTH } from '../firebaseConfig';
+import NavBar from './NavBar';
 
-export default function Login({navigation}) {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-
-  // Use Firebase auth to sign in, and then redirect to the upload page
-  function handleSignIn() {
-    signInWithEmailAndPassword(FIREBASE_AUTH, email, password).then((userCredential) => {
-      const user = userCredential.user;
-      navigation.reset({index: 0, routes: [{name: 'Log'}]});
-    }).catch((error) => {
-      const errorCode = error.code;
-      const errorMessage = error.message;
-      alert(errorMessage);
-    });
-  }
-
+export default function FoodLog({navigation}) {
+  const component = 'FoodLog';
+  
   return (
     <View style={{flex: 1}}>
       <View style={styles.container}>
-        <Text style={styles.title}>
-          FoodFinder
-        </Text>
         <View style={styles.buttonContainer}>
-          <TextInput style={styles.input} placeholder='  Email: ' placeholderTextColor={'white'} onChangeText={newEmail => setEmail(newEmail)} defaultValue={email} autoCapitalize='none' />
-          <TextInput style={styles.input} secureTextEntry={true} placeholder='  Password: ' placeholderTextColor={'white'} onChangeText={newPassword => setPassword(newPassword)} defaultValue={password} autoCapitalize='none'/>
-          <TouchableOpacity style={styles.button} onPress={() => handleSignIn(FIREBASE_AUTH, email, password)}>
+          <TextInput style={styles.input} placeholder='  Email: ' placeholderTextColor={'white'} autoCapitalize='none' />
+          <TextInput style={styles.input} secureTextEntry={true} placeholder='  Password: ' placeholderTextColor={'white'} autoCapitalize='none'/>
+          <TouchableOpacity style={styles.button}>
             <Text style={styles.text}>
               Login
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          <TouchableOpacity style={styles.backButton} >
             <Text style={styles.text}>Back</Text>
           </TouchableOpacity>
         </View>
+      </View>
+      <View style={{height: '10%', backgroundColor: '#3A3B3C'}}>
+        <NavBar navigation={navigation} component={component}/>
       </View>
     </View>
   )

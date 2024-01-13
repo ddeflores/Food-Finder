@@ -16,7 +16,7 @@ export default function SignUp({navigation}) {
     if (password === confirmedPassword) {
       createUserWithEmailAndPassword(FIREBASE_AUTH, email, password).then((userCredential) => {
         const user = userCredential.user;
-        navigation.reset({index: 0, routes: [{name: 'Upload Picture'}]});
+        navigation.reset({index: 0, routes: [{name: 'Log'}]});
       }).catch((error) => {
         const errorCode = error.code;
         const errorMessage = error.message;
@@ -39,7 +39,7 @@ export default function SignUp({navigation}) {
           <TextInput style={styles.input} placeholder='  Email: ' placeholderTextColor={'white'} onChangeText={newEmail => setEmail(newEmail)} defaultValue={email} autoCapitalize='none' />
           <TextInput style={styles.input} secureTextEntry={true} placeholder='  Password: ' placeholderTextColor={'white'} onChangeText={newPassword => setPassword(newPassword)} defaultValue={password} autoCapitalize='none'/>
           <TextInput style={styles.input} secureTextEntry={true} placeholder='  Confirm Password: ' placeholderTextColor={'white'} onChangeText={newPassword => setConfirmedPassword(newPassword)} defaultValue={confirmedPassword} autoCapitalize='none'/>
-          <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+          <TouchableOpacity style={styles.button} onPress={() => handleSignUp(FIREBASE_AUTH, email, password)}>
             <Text style={styles.text}>
               Sign Up
             </Text>

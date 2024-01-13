@@ -14,7 +14,7 @@ import 'react-native-url-polyfill/auto';
 
 // Local components and configurations
 import CameraDisplay from './CameraDisplay';
-import { FIREBASE_DB } from '../firebaseConfig';
+import NavBar from './NavBar';
 import { OPENAI_API_KEY } from '@env';
 
 export default function UploadPicture({navigation}) {
@@ -25,6 +25,7 @@ export default function UploadPicture({navigation}) {
   const [prediction, setPrediction] = useState(null);
   const [process, setProcess] = useState('');
   const openai = new OpenAI({apiKey: OPENAI_API_KEY});
+  const component = 'UploadPicture';
 
   // Loading the binary classifier model
   const loadModel = async (jsonPath) => {
@@ -177,6 +178,9 @@ export default function UploadPicture({navigation}) {
             onExit={handleExit}
           />
         }
+        <View style={{height: '10%', backgroundColor: '#3A3B3C'}}>
+          <NavBar navigation={navigation} component={component}/>
+        </View>
     </View>
   );
 }
