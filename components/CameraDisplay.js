@@ -1,6 +1,9 @@
-import { Camera, CameraType } from 'expo-camera';
+// React and react native imports
 import { useState, useRef } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+// Third party libraries
+import { Camera, CameraType } from 'expo-camera';
 
 function CameraDisplay({ permission, requestionPermission, onPhotoTaken, onExit }) {
     const placeholder = require('../placeholder.png');

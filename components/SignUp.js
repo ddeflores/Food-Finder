@@ -1,5 +1,8 @@
+// React and react native imports
 import { useState, useEffect } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+
+// Local components and configs
 import { FIREBASE_AUTH } from '../firebaseConfig.js';
 import { createUserWithEmailAndPassword, getAuth } from 'firebase/auth';
 
@@ -8,11 +11,12 @@ export default function SignUp({navigation}) {
   const [password, setPassword] = useState(null);
   const [confirmedPassword, setConfirmedPassword] = useState(null);
 
+  // Use Firebase auth to sign up, and then redirect to the upload page
   function handleSignUp() {
     if (password === confirmedPassword) {
       createUserWithEmailAndPassword(FIREBASE_AUTH, email, password).then((userCredential) => {
         const user = userCredential.user;
-        navigation.reset({index: 0, routes: [{name: 'Upload Picture'}]});
+        navigation.reset({index: 0, routes: [{name: 'Log'}]});
       }).catch((error) => {
         const errorCode = error.code;
         const errorMessage = error.message;
@@ -35,10 +39,13 @@ export default function SignUp({navigation}) {
           <TextInput style={styles.input} placeholder='  Email: ' placeholderTextColor={'white'} onChangeText={newEmail => setEmail(newEmail)} defaultValue={email} autoCapitalize='none' />
           <TextInput style={styles.input} secureTextEntry={true} placeholder='  Password: ' placeholderTextColor={'white'} onChangeText={newPassword => setPassword(newPassword)} defaultValue={password} autoCapitalize='none'/>
           <TextInput style={styles.input} secureTextEntry={true} placeholder='  Confirm Password: ' placeholderTextColor={'white'} onChangeText={newPassword => setConfirmedPassword(newPassword)} defaultValue={confirmedPassword} autoCapitalize='none'/>
-          <TouchableOpacity style={styles.button} onPress={handleSignUp}>
+          <TouchableOpacity style={styles.button} onPress={() => handleSignUp(FIREBASE_AUTH, email, password)}>
             <Text style={styles.text}>
               Sign Up
             </Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+            <Text style={styles.text}>Back</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -64,6 +71,16 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
       alignItems: 'center',
     },
+    backButton: {
+      marginTop: 10,
+      backgroundColor: "#18191A",
+      borderRadius: 18,
+      width: 320,
+      height: '10%',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+    },
     input: {
       marginTop: 10,
       backgroundColor: "#3A3B3C",
@@ -76,7 +93,7 @@ const styles = StyleSheet.create({
       alignItems: 'center',
       color: 'white',
       fontSize: 16,
-      fontWeight: 'bold'
+      fontWeight: '100'
     },
     text: {
       color: "white",

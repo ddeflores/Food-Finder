@@ -1,22 +1,8 @@
+// React and react native imports
 import React from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { FIREBASE_AUTH, FIREBASE_PROVIDER } from '../firebaseConfig';
-import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 
 export default function HomeScreen({navigation}) {
-
-  const onGoogleSignIn = async () => {
-    try {
-      const response = await signInWithPopup(FIREBASE_AUTH, FIREBASE_PROVIDER);
-      console.log(response);
-      const credential = GoogleAuthProvider.credentialFromResult(response);
-      const token = credential.accessToken;
-      const user = response.user;
-    } catch (error) {
-      console.log(error);
-      alert('Sign in failed: ' + error.message);
-    }
-  };
 
   return (
     <View style={{flex: 1}}>
