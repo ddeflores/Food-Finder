@@ -2,25 +2,32 @@
 import React from 'react'
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 
+// Third party libraries
+import Icon from 'react-native-vector-icons/Entypo'
+
 export default function NavBar({navigation, component}) {
+
+  // Make sure that the current working component is not UploadPicture
   function navigateToUploadPicture() {
     if (component !== 'UploadPicture') {
         navigation.reset({index: 0, routes: [{name: 'Upload Picture'}]})
     }
   }
 
+  // Make sure that the current working component is not FoodLog
   function navigateToFoodLog() {
     if (component !== 'FoodLog') {
         navigation.reset({index: 0, routes: [{name: 'Log'}]})
     }
   }
+
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={() => navigateToUploadPicture()}>  
-        <Text style={styles.text}>Log with Pic</Text>
+      <TouchableOpacity onPress={() => navigateToUploadPicture()} style={styles.iconContainer}>  
+        <Icon name="camera" size={40} style={{color: '#18191A'}} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateToFoodLog()}>
-        <Text style={styles.text}>Regular</Text>
+      <TouchableOpacity onPress={() => navigateToFoodLog()} style={styles.iconContainer}>
+        <Icon name="home" size={40} style={{color: '#18191A'}} />
       </TouchableOpacity>
     </View>
   )
@@ -34,11 +41,8 @@ const styles = StyleSheet.create({
       justifyContent: 'center',
       backgroundColor: '#3A3B3C',
     },
-    text: {
-        color: "white",
-        fontSize: 'auto',
-        fontSize: 16,
-        fontWeight: 'bold',
+    iconContainer: {
+        color: "#18191A",
         marginHorizontal: '10%',
         marginBottom: 20
     },
