@@ -6,22 +6,17 @@ import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-nativ
 import NavBar from './NavBar';
 
 export default function FoodLog({navigation}) {
+  const [food, setFood] = useState(null);
+  const [calories, setCalories] = useState(null);
   const component = 'FoodLog';
-  
+
   return (
     <View style={{flex: 1}}>
       <View style={styles.container}>
         <View style={styles.buttonContainer}>
-          <TextInput style={styles.input} placeholder='  Email: ' placeholderTextColor={'white'} autoCapitalize='none' />
-          <TextInput style={styles.input} secureTextEntry={true} placeholder='  Password: ' placeholderTextColor={'white'} autoCapitalize='none'/>
-          <TouchableOpacity style={styles.button}>
-            <Text style={styles.text}>
-              Login
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.backButton} >
-            <Text style={styles.text}>Back</Text>
-          </TouchableOpacity>
+          <Text>
+            My Food Log:
+          </Text>
         </View>
       </View>
       <View style={{height: '10%', backgroundColor: '#3A3B3C'}}>
