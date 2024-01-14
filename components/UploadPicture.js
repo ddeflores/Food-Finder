@@ -140,7 +140,7 @@ export default function UploadPicture({navigation}) {
   
   return (
     <View style={{flex: 1}}>
-{/* When the camera isnt visible, show the menu to upload pictures */}
+        {/* When the camera isnt visible, show the menu to upload pictures */}
         {!cameraVisible &&
           <View style={styles.container}>
             <View style={styles.imageContainer}>
@@ -152,14 +152,14 @@ export default function UploadPicture({navigation}) {
             <TouchableOpacity style={styles.button} onPress={() => setCameraVisible(true)}>
               <Text style={styles.text}>Take Photo</Text>
             </TouchableOpacity>
-{/* When a picture is uploaded and no prediction has been made yet, display the loading symbol and current process */}
+            {/* When a picture is uploaded and no prediction has been made yet, display the loading symbol and current process */}
             {(currentImg !== placeholder && !prediction) &&
               <View style={{marginTop: 10, flexDirection: 'row'}}>
                 <Text style={styles.text}>{process}</Text>
                 <ActivityIndicator size="small" style={{marginLeft: 5}}/>
               </View>
             }
-{/* When a prediction has been made, display it */}
+            {/* When a prediction has been made, display it */}
             {prediction &&
               <View style={{marginTop: 10}}>
                 <Text style={styles.text}>
@@ -169,7 +169,7 @@ export default function UploadPicture({navigation}) {
             }
           </View>
         }
-{/* Camera is visible */}
+        {/* Camera is visible */}
         {cameraVisible &&
           <CameraDisplay 
             permission={permission}

@@ -16,7 +16,7 @@ export default function SignUp({navigation}) {
     if (password === confirmedPassword) {
       createUserWithEmailAndPassword(FIREBASE_AUTH, email, password).then((userCredential) => {
         const user = userCredential.user;
-        navigation.reset({index: 0, routes: [{name: 'Log'}]});
+        navigation.reset({index: 0, routes: [{name: 'Logger'}]});
       }).catch((error) => {
         const errorCode = error.code;
         const errorMessage = error.message;

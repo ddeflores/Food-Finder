@@ -7,6 +7,7 @@ import Login from './components/Login.js';
 import SignUp from './components/SignUp.js';
 import UploadPicture from './components/UploadPicture.js';
 import FoodLog from './components/FoodLog.js';
+import Logger from './components/Logger.js';
 
 export default function App() {
   const [initialRoute, setInitialRoute] = useState('Home');
@@ -32,7 +33,8 @@ export default function App() {
         <Stack.Screen name="Login" component={Login} options={{headerShown: false}}/>
         <Stack.Screen name="SignUp" component={SignUp} options={{headerShown: false}}/>
         <Stack.Screen name="Upload Picture" component={UploadPicture} options={{headerShown: false}}/>
-        <Stack.Screen name="Log" component={FoodLog} options={{headerShown: false}}/>
+        <Stack.Screen name="Logger" component={Logger} options={{headerShown: false}}/>
+        <Stack.Screen name="FoodLog" component={FoodLog} options={{headerShown: false}}/>
       </Stack.Navigator>
     </NavigationContainer>
   );
