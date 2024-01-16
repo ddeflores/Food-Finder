@@ -5,7 +5,7 @@ import { ScrollView } from 'react-native';
 
 // Third party libraries
 import { FIREBASE_AUTH, FIREBASE_DB } from '../firebaseConfig'
-import { ref, onValue } from 'firebase/database'
+import { ref, onValue, push, update, remove } from 'firebase/database'
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 // Local components and configs
@@ -18,7 +18,7 @@ export default function FoodLog({navigation}) {
     const [day, setDay] = useState(new Date().toDateString())
     const [dayMenuVisible, setDayMenuVisible] = useState(false)
     const [editVisible, setEditVisible] = useState(false)
-
+    const [foodLogChanged, setFoodLogChanged] = useState(false)
     // Initially show the food log, and update it whenever the date changes
     useEffect(() => {
       updateFoodLog()
@@ -50,17 +50,36 @@ export default function FoodLog({navigation}) {
     }
 
     // Delete a food from the food log, but not from database
-    function deleteFood(index) {
+    function deleteFoodLocally(index) {
       const newFoods = [...foods]
       newFoods.splice(index, 1)
       setFoods(newFoods)
       const newCalories = [...calories]
       newCalories.splice(index, 1)
       setCalories(newCalories)
+      setFoodLogChanged(true)
+    }
+
+    function deleteFoodFromDB() {
+        const newRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/logs/' + day + '/foods'));
+        remove(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/logs/' + day + '/foods'))
+        foods.map((typeFood, index) => {
+          const newRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/logs/' + day + '/foods'))
+          update(newRef, {
+              food: typeFood,
+              calories: calories[index]
+          }).catch((error) => {
+              alert(error);
+          })
+        })
+        setFoodLogChanged(false)
     }
 
     // Confirm user edits on food log
     function confirmEdits() {
+      if (editVisible && foodLogChanged) {
+        deleteFoodFromDB()
+      }
       setEditVisible(!editVisible)
     }
 
@@ -104,7 +123,7 @@ export default function FoodLog({navigation}) {
                             {!food.includes('No Log on') ? calories[index] + ' calories' : ''}
                           </Text> 
                       </View>
-                      <TouchableOpacity style={styles.button} onPress={() => deleteFood(index)}>
+                      <TouchableOpacity style={styles.button} onPress={() => deleteFoodLocally(index)}>
                         <Text style={styles.delete}>Delete</Text>
                       </TouchableOpacity>
                     </View>
