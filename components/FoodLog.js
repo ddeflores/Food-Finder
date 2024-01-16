@@ -1,6 +1,6 @@
 // React and react native imports
 import { useState, useEffect } from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { ScrollView } from 'react-native';
 
 // Third party libraries
@@ -49,6 +49,21 @@ export default function FoodLog({navigation}) {
       });
     }
 
+    // Delete a food from the food log, but not from database
+    function deleteFood(index) {
+      const newFoods = [...foods]
+      newFoods.splice(index, 1)
+      setFoods(newFoods)
+      const newCalories = [...calories]
+      newCalories.splice(index, 1)
+      setCalories(newCalories)
+    }
+
+    // Confirm user edits on food log
+    function confirmEdits() {
+      setEditVisible(!editVisible)
+    }
+
     // When the user slides the scroll wheel to a different date, update the state of day
     const setDate = (event, date) => {
       setDay(date.toDateString())
@@ -80,8 +95,18 @@ export default function FoodLog({navigation}) {
               {foods.map((food, index) => {
                 if (editVisible) {
                   return (
-                    <View style={{flexDirection: 'row'}}>
-                      <Text> Hi </Text>
+                    <View style={styles.editMode} key={index}>
+                      <View>
+                          <Text style={styles.food}>
+                            {food}
+                          </Text> 
+                          <Text style={styles.calories}>
+                            {!food.includes('No Log on') ? calories[index] + ' calories' : ''}
+                          </Text> 
+                      </View>
+                      <TouchableOpacity style={styles.button} onPress={() => deleteFood(index)}>
+                        <Text style={styles.delete}>Delete</Text>
+                      </TouchableOpacity>
                     </View>
                   )
                 }
@@ -110,7 +135,7 @@ export default function FoodLog({navigation}) {
                 Change day
               </Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => setEditVisible(!editVisible)}>
+            <TouchableOpacity style={styles.button} onPress={() => confirmEdits()}>
               {editVisible &&
                 <Text style={styles.text}>
                   Confirm Changes
@@ -222,5 +247,14 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 22,
         fontWeight: 'bold',
+    },
+    delete: {
+        fontWeight: 'bold',
+        color: 'black'
+    },
+    editMode: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between'
     }
 });
