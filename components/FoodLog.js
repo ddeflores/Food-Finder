@@ -1,11 +1,11 @@
 // React and react native imports
 import { useState, useEffect } from 'react';
-import { Modal, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
+import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 import { ScrollView } from 'react-native';
 
 // Third party libraries
 import { FIREBASE_AUTH, FIREBASE_DB } from '../firebaseConfig'
-import { ref, onValue } from 'firebase/database'
+import { ref, onValue, push, update, remove } from 'firebase/database'
 import DateTimePicker from '@react-native-community/datetimepicker';
 
 // Local components and configs
@@ -13,10 +13,12 @@ import NavBar from './NavBar';
 
 export default function FoodLog({navigation}) {
     const component = 'FoodLog'
-    const [foodLog, setFoodLog] = useState([])
+    const [foods, setFoods] = useState([])
+    const [calories, setCalories] = useState([])
     const [day, setDay] = useState(new Date().toDateString())
     const [dayMenuVisible, setDayMenuVisible] = useState(false)
-
+    const [editVisible, setEditVisible] = useState(false)
+    const [foodLogChanged, setFoodLogChanged] = useState(false)
     // Initially show the food log, and update it whenever the date changes
     useEffect(() => {
       updateFoodLog()
@@ -37,21 +39,53 @@ export default function FoodLog({navigation}) {
             tmpCalories.push((data[Object.keys(data)[i]]['calories']))
           }
           // Map each food and calories pair to the new food log, and update the state of the current food log
-          let newFoodLog = []
-          tmpFoods.map((item, index) => {
-            newFoodLog.push(item + ': ' + tmpCalories[index] + ' Calories')
-          })
-          setFoodLog(newFoodLog)
+          setFoods(tmpFoods)
+          setCalories(tmpCalories)
         }
         else {
-          setFoodLog(['No Log on ' + day])
+          setFoods(['No Log on ' + day])
+          setCalories([])
         }
       });
     }
 
+    // Delete a food from the food log, but not from database
+    function deleteFoodLocally(index) {
+      const newFoods = [...foods]
+      newFoods.splice(index, 1)
+      setFoods(newFoods)
+      const newCalories = [...calories]
+      newCalories.splice(index, 1)
+      setCalories(newCalories)
+      setFoodLogChanged(true)
+    }
+
+    function deleteFoodFromDB() {
+        const newRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/logs/' + day + '/foods'));
+        remove(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/logs/' + day + '/foods'))
+        foods.map((typeFood, index) => {
+          const newRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/logs/' + day + '/foods'))
+          update(newRef, {
+              food: typeFood,
+              calories: calories[index]
+          }).catch((error) => {
+              alert(error);
+          })
+        })
+        setFoodLogChanged(false)
+    }
+
+    // Confirm user edits on food log
+    function confirmEdits() {
+      if (editVisible && foodLogChanged) {
+        deleteFoodFromDB()
+      }
+      setEditVisible(!editVisible)
+    }
+
+    // When the user slides the scroll wheel to a different date, update the state of day
     const setDate = (event, date) => {
       setDay(date.toDateString())
-      console.log(date.toDateString())
     };
     
     return (
@@ -66,7 +100,7 @@ export default function FoodLog({navigation}) {
                 <View style={styles.dayMenuContainer}>
                   <DateTimePicker maximumDate={new Date()} dateFormat="dayofweek day month" mode="date" value={new Date(day)} display='spinner' onChange={setDate}/>
                   <View style={{flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center'}}>
-                    <TouchableOpacity style={{marginHorizontal: 50}} onPress={() => setDay(new Date().toDateString())}>
+                    <TouchableOpacity style={{marginHorizontal: 50}} onPress={() => {setDay(new Date().toDateString()); setDayMenuVisible(false)}}>
                       <Text style={{paddingBottom: 20, color: 'white', fontWeight: 'bold', fontSize: 16}}>Reset</Text>
                     </TouchableOpacity>
                     <TouchableOpacity style={{marginHorizontal: 50}} onPress={() => setDayMenuVisible(false)}>
@@ -77,19 +111,62 @@ export default function FoodLog({navigation}) {
               </Modal>
             }
             <ScrollView style={styles.log}>
-              {foodLog.map((pair, index) => {
-                return (
-                  <Text style={styles.logText} key={index}> 
-                    {pair}
-                  </Text>
-                )
+              {foods.map((food, index) => {
+                if (editVisible) {
+                  return (
+                    <View style={styles.editMode} key={index}>
+                      <View>
+                          <Text style={styles.food}>
+                            {food}
+                          </Text> 
+                          <Text style={styles.calories}>
+                            {!food.includes('No Log on') ? calories[index] + ' calories' : ''}
+                          </Text> 
+                      </View>
+                      <TouchableOpacity style={styles.button} onPress={() => deleteFoodLocally(index)}>
+                        <Text style={styles.delete}>Delete</Text>
+                      </TouchableOpacity>
+                    </View>
+                  )
+                }
+                else {
+                  return (
+                    <View key={index}>
+                      <Text style={styles.food}> 
+                        {food}
+                      </Text>
+                      <Text style={styles.calories}> 
+                        {!food.includes('No Log on') ? calories[index] + ' calories' : ''}
+                      </Text>
+                    </View>
+                  )
+                }
               })}
             </ScrollView>
-            <TouchableOpacity style={styles.button} onPress={() => setDayMenuVisible(true)}>
+            <View style={{marginTop: 20, marginLeft: '25%'}}>
+                <Text style={styles.text}>
+                  Total Calories: {calories.reduce((partialSum, calorie) => Number(partialSum) + Number(calorie), 0)}
+                </Text>
+            </View>
+            <View style={{flexDirection: 'row'}}>
+            <TouchableOpacity style={styles.button} disabled={editVisible} onPress={() => setDayMenuVisible(true)}>
               <Text style={styles.text}>
-                Change day:
+                Change day
               </Text>
             </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={() => confirmEdits()}>
+              {editVisible &&
+                <Text style={styles.text}>
+                  Confirm Changes
+                </Text>
+              }
+              {!editVisible &&
+                <Text style={styles.text}>
+                  Edit Log
+                </Text>
+              }
+            </TouchableOpacity>
+            </View>
           </View>
         </View>
         <View style={{height: '10%', backgroundColor: '#3A3B3C'}}>
@@ -108,12 +185,12 @@ const styles = StyleSheet.create({
         paddingTop: '10%',
     },
     button: {
-        marginTop: 10,
+        margin: 10,
         marginBottom: 10,
         backgroundColor: "#3A3B3C",
         borderRadius: 18,
-        width: 320,
-        height: '10%',
+        width: 150,
+        height: 50,
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
@@ -165,13 +242,20 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-start',
         marginLeft: 30,
     },
-    logText: {
+    food: {
         color: "white",
-        fontSize: 'auto',
-        fontSize: 16,
+        fontSize: 20,
         marginTop: 20,
-        marginLeft: 15
+        marginLeft: 15,
+        fontWeight: '400'
     },
+    calories: {
+      color: "#B5B5B5",
+      fontSize: 18,
+      marginTop: 5,
+      marginLeft: 15,
+      fontWeight: '300'
+  },
     dayMenuContainer: {
         flex: 1,
         backgroundColor: '#18191A',
@@ -182,5 +266,14 @@ const styles = StyleSheet.create({
         color: 'white',
         fontSize: 22,
         fontWeight: 'bold',
+    },
+    delete: {
+        fontWeight: 'bold',
+        color: 'black'
+    },
+    editMode: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between'
     }
 });
