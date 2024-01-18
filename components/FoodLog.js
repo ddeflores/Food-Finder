@@ -22,7 +22,8 @@ export default function FoodLog({navigation}) {
     const [foodLogEditMode, setFoodLogEditMode] = useState(false)
     const [editedFoodName, setEditedFoodName] = useState('')
     const [editedCalories, setEditedCalories] = useState('')
-    const editIndex = useRef(null)
+    const [editIndex, setEditIndex] = useState(null)
+
     // Initially show the food log, and update it whenever the date changes
     useEffect(() => {
       updateFoodLog()
@@ -64,22 +65,26 @@ export default function FoodLog({navigation}) {
       setFoodLogChanged(true)
     }
 
-    // Display user edits for a food locally, but not from the database
-    function editFoodLocally(index, foodEdit) {
+    // Display user edits for a food locally, but not on the database
+    function editFoodLocally(index, foodEdit, caloriesEdit) {
+      // Edit foods list
       const newFoods = [...foods]
       newFoods.splice(index, 1, foodEdit)
       setFoods(newFoods)
-      setFoodLogChanged(true)
-      setFoodLogEditMode(false)
-    }
 
-    // Display user edits for a calorie count locally, but not the from database
-    function editCaloriesLocally(index, caloriesEdit) {
+      // Edit calories list
       const newCalories = [...calories]
       newCalories.splice(index, 1, caloriesEdit)
       setCalories(newCalories)
       setFoodLogChanged(true)
       setFoodLogEditMode(false)
+
+      // Reset states
+      setFoodLogChanged(true)
+      setFoodLogEditMode(false)
+      editIndex.current = null
+      setEditedFoodName('')
+      setEditedCalories('')
     }
 
     // Reflect changes locally (deletes and/or edits) in the database
@@ -138,13 +143,13 @@ export default function FoodLog({navigation}) {
             {foodLogEditMode && 
               <Modal>
                 <View style={styles.modalContainer}>
-                  <View>
-                    <TextInput placeholder='  New Food Name:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setEditedFoodName(newFood)} defaultValue={editedFoodName}/>
-                    <TextInput placeholder='  New Calorie Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setEditedCalories(newCalories)} defaultValue={editedCalories}/>
+                  <View style={{alignItems: 'center', justifyContent: 'center'}}>
+                    <TextInput style={styles.input} placeholder='  New Food Name:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setEditedFoodName(newFood)} defaultValue={editedFoodName}/>
+                    <TextInput style={styles.input} placeholder='  New Calorie Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setEditedCalories(newCalories)} defaultValue={editedCalories}/>
+                    <TouchableOpacity style={styles.button} onPress={() => editFoodLocally(editIndex, editedFoodName, editedCalories)}>
+                        <Text style={styles.text}>Confirm Changes</Text>
+                    </TouchableOpacity>
                   </View>
-                  <TouchableOpacity style={styles.button} onPress={() => {editFoodLocally(editIndex, editedFoodName); editCaloriesLocally(editIndex, editedCalories)}}>
-                    <Text style={styles.text}>Confirm Changes</Text>
-                  </TouchableOpacity>
                 </View>
               </Modal>
             }
@@ -162,7 +167,7 @@ export default function FoodLog({navigation}) {
                           </Text> 
                       </View>
                       <View style={{flexDirection: 'row'}}>
-                        <TouchableOpacity style={styles.editButton} onPress={() => {setFoodLogEditMode(true); editIndex.current = index}}>
+                        <TouchableOpacity style={styles.editButton} onPress={() => {setFoodLogEditMode(true); setEditIndex(index)}}>
                           <Text style={styles.editText}>Edit</Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.editButton} onPress={() => deleteFoodLocally(index)}>
@@ -265,7 +270,7 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         width: 320,
         paddingLeft: 20,
-        height: '10%',
+        height: '15%',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',
