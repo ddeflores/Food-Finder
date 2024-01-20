@@ -5,36 +5,40 @@ import { StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'rea
 // Third party libraries
 import { FIREBASE_AUTH } from '../firebaseConfig';
 import { signOut } from 'firebase/auth';
+import * as SMS from 'expo-sms';
 
 // Local components and configs
 import NavBar from './NavBar';
 
 function Settings({navigation}) {
     const component = 'Settings'
-    const [mode, setMode] = useState(false)
-
-    function switchDisplay() {
-        setMode(!mode)
-    }
 
     function handleLogout() {
         signOut(FIREBASE_AUTH)
         navigation.reset({index: 0, routes: [{name: 'Home'}]})
     }
 
+    async function handleReferral() {
+        const { result } = SMS.sendSMSAsync(
+            [],
+            'Reach your fitness goals with me on FoodFinder!\nhttps://linkedin.com/in/danieldeflores/'
+        );
+    }
+
     return (
         <View style={{flex: 1}}>
             <View style={styles.container}>
+                <Text style={styles.text}>Account Email:</Text>
+                <Text style={styles.infoText}>{FIREBASE_AUTH.currentUser.email}</Text>
                 <View style={styles.buttonContainer}>
-                    <View style={styles.switchContainer}>
-                        <Text style={styles.text}>
-                            Dark Mode?
-                        </Text>
-                        <Switch value={mode} onChange={() => switchDisplay()}/>
-                    </View>
                     <TouchableOpacity style={styles.button} onPress={() => handleLogout()}>
                         <Text style={styles.text}>
                             Logout
+                        </Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity style={styles.button} onPress={() => handleReferral()}>
+                        <Text style={styles.text}>
+                            Tell a Friend
                         </Text>
                     </TouchableOpacity>
                 </View>
@@ -94,6 +98,11 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: 'bold'
     },
+    infoText: {
+        color: "white",
+        fontSize: 'auto',
+        fontSize: 18,
+    },
     title: {
         color: "white",
         fontSize: 'auto',
@@ -104,10 +113,8 @@ const styles = StyleSheet.create({
         flex: 1,
         paddingTop: '10%',
     },
-    switchContainer: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-around',
+    information: {
+        flexDirection: 'row'
     }
 });
 
