@@ -28,6 +28,13 @@ export default function NavBar({navigation, component}) {
     }
   }
 
+  // Make sure that the current working component is not Settings
+  function navigateToSettings() {
+    if (component !== 'Settings') {
+        navigation.reset({index: 0, routes: [{name: 'Settings'}]})
+    }
+  }
+
   return (
     <View style={styles.container}>
     <TouchableOpacity onPress={() => navigateToUploadPicture()} style={styles.iconContainer}> 
@@ -42,7 +49,7 @@ export default function NavBar({navigation, component}) {
       <TouchableOpacity onPress={() => navigateToUploadPicture()} style={styles.iconContainer}> 
         <Icon name="run" size={40} style={{color: '#18191A'}} />
       </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateToUploadPicture()} style={styles.iconContainer}> 
+      <TouchableOpacity onPress={() => navigateToSettings()} style={styles.iconContainer}> 
         <Icon name="cog" size={40} style={{color: '#18191A'}} />
       </TouchableOpacity>
     </View>
