@@ -67,24 +67,26 @@ export default function FoodLog({navigation}) {
 
     // Display user edits for a food locally, but not on the database
     function editFoodLocally(index, foodEdit, caloriesEdit) {
-      // Edit foods list
-      const newFoods = [...foods]
-      newFoods.splice(index, 1, foodEdit)
-      setFoods(newFoods)
+      if (editedFoodName !== '' && editedCalories !== '') {
+          // Edit foods list
+          const newFoods = [...foods]
+          newFoods.splice(index, 1, foodEdit)
+          setFoods(newFoods)
 
-      // Edit calories list
-      const newCalories = [...calories]
-      newCalories.splice(index, 1, caloriesEdit)
-      setCalories(newCalories)
-      setFoodLogChanged(true)
-      setFoodLogEditMode(false)
+          // Edit calories list
+          const newCalories = [...calories]
+          newCalories.splice(index, 1, caloriesEdit)
+          setCalories(newCalories)
+          setFoodLogChanged(true)
+          setFoodLogEditMode(false)
 
-      // Reset states
-      setFoodLogChanged(true)
-      setFoodLogEditMode(false)
-      editIndex.current = null
-      setEditedFoodName('')
-      setEditedCalories('')
+          // Reset states
+          setFoodLogChanged(true)
+          setFoodLogEditMode(false)
+          editIndex.current = null
+          setEditedFoodName('')
+          setEditedCalories('')
+      }
     }
 
     // Reflect changes locally (deletes and/or edits) in the database
