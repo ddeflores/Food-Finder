@@ -1,9 +1,9 @@
 // React and react native imports
 import { useEffect, useState } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { Modal, ScrollView, StyleSheet, Text, TextInput, Touchable, TouchableOpacity, View } from 'react-native'
 
 // Third party libraries
-import { ref, update, push } from "firebase/database";
+import { ref, update, push, onValue } from "firebase/database";
 import { FIREBASE_AUTH, FIREBASE_DB } from '../firebaseConfig';
 
 // Local components and configs
@@ -14,6 +14,35 @@ export default function FoodLog({navigation}) {
     const [calories, setCalories] = useState(null);
     const component = 'Logger';
     const [day, setDay] = useState(new Date().toDateString())
+    const [foodNames, setFoodNames] = useState([])
+    const [calorieCounts, setCalorieCounts] = useState([])
+    const [foodLogModal, setFoodLogModal] = useState(false)
+
+    // Fetch the list of foods and calories that the user has added
+    const foodsRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/foodNames')
+    const caloriesRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/calorieCounts')
+    useEffect(() => {
+        onValue(foodsRef, (snapshot) => {
+            data = snapshot.val()
+            tmpFoods = []
+            if (data) {
+                for (let i = 0; i < Object.keys(data).length; i++) {
+                    tmpFoods.push(data[Object.keys(data)[i]]['food'])
+                }
+                setFoodNames(tmpFoods)
+            }
+        })  
+        onValue(caloriesRef, (snapshot) => {
+            data = snapshot.val()
+            tmpCalories = []
+            if (data) {
+                for (let i = 0; i < Object.keys(data).length; i++) {
+                    tmpCalories.push(data[Object.keys(data)[i]]['calories'])
+                }
+                setCalorieCounts(tmpCalories)
+            }
+        })  
+    }, [])
 
     // Change the current day to log
     useEffect(() => {
@@ -32,19 +61,70 @@ export default function FoodLog({navigation}) {
         }).catch((error) => {
             alert(error);
         });
+        const foodsRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/foodNames'))
+        const caloriesRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/calorieCounts'))
+        // If the food is not already stored in any of the users logs, add it to the comprehensive list 
+        if (!foodNames.includes(typeFood)) {
+            update(foodsRef, {
+                food: typeFood
+            }).catch((error) => {
+                alert(error);
+            });
+
+            update(caloriesRef, {
+                calories: numCalories
+            }).catch((error) => {
+                alert(error);
+            });
+        }
+    }
+
+    // When a user chooses a food from the import modal, switch back to the regular logging screen with the chosen food inside of the input
+    function pickFoodToLog(foodName, numCalories) {
+        setFood(foodName)
+        setCalories(numCalories)
+        setFoodLogModal(false)
     }
 
     return (
         <View style={{flex: 1}}>
             <View style={styles.container}>
                 <View style={styles.buttonContainer}>
-                    <TextInput style={styles.input} placeholder='  Food: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setFood(newFood)} defaultValue={food}/>
-                    <TextInput style={styles.input} placeholder='  Calories: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setCalories(newCalories)} defaultValue={calories}/>
-                    <TouchableOpacity style={styles.button} onPress={() => uploadFoodToDB(food, calories)}>
-                        <Text style={styles.text}>
-                            Log
-                        </Text>
-                    </TouchableOpacity>
+                    <>
+                        <TextInput style={styles.input} placeholder='  Food: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setFood(newFood)} defaultValue={food}/>
+                        <TextInput style={styles.input} placeholder='  Calories: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setCalories(newCalories)} defaultValue={calories}/>
+                        <TouchableOpacity style={styles.button} onPress={() => uploadFoodToDB(food, calories)}>
+                            <Text style={styles.text}>
+                                Log New Meal
+                            </Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.button} onPress={() => setFoodLogModal(true)}>
+                            <Text style={styles.text}>Import meal from your food logs</Text>
+                        </TouchableOpacity>
+                    </>
+                    <Modal visible={foodLogModal} animationType='fade' presentationStyle='overFullScreen'>
+                        <View style={styles.modalContainer}>
+                            <ScrollView style={styles.modalFoodLog} contentContainerStyle={{justifyContent: 'flex-start', alignItems: 'flex-start',}}>
+                                {foodNames.length > 0 ? foodNames.map((food, index) => {
+                                    return (
+                                        <TouchableOpacity key={index} onPress={() => pickFoodToLog(food, calorieCounts[index])}>
+                                            <Text style={styles.food}>
+                                                {food}
+                                            </Text> 
+                                            <Text style={styles.calories}>
+                                                {calorieCounts[index]}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    )
+                                }) :
+                                    <Text style={styles.text}>You have no foods logged!</Text>
+                                }
+                            </ScrollView>
+                            <TouchableOpacity style={styles.backButton} onPress={() => navigation.reset({index: 0, routes: [{name: 'Logger'}]})}>
+                                <Text style={styles.text}>Back</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </Modal>
                 </View>
             </View>
             <View style={{height: '10%', backgroundColor: '#3A3B3C'}}>
@@ -73,14 +153,13 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     backButton: {
-        marginTop: 10,
-        backgroundColor: "#18191A",
+        backgroundColor: "#3A3B3C",
         borderRadius: 18,
-        width: 320,
-        height: '10%',
-        display: 'flex',
+        width: 200,
+        height: '8%',
         justifyContent: 'center',
         alignItems: 'center',
+        marginBottom: '20%',
     },
     input: {
         marginTop: 10,
@@ -111,5 +190,32 @@ const styles = StyleSheet.create({
     buttonContainer: {
         flex: 1,
         paddingTop: '10%',
-    }
+    },
+    modalContainer: {
+        flex: 1,
+        backgroundColor: '#18191A',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    modalFoodLog: {
+        width: '90%',
+        backgroundColor: '#3A3B3C',
+        borderRadius: 18,
+        marginTop: '25%',
+        marginBottom: '10%'
+    },
+    food: {
+        color: "white",
+        fontSize: 20,
+        marginTop: 20,
+        marginLeft: 15,
+        fontWeight: '400',        
+    },
+    calories: {
+      color: "#B5B5B5",
+      fontSize: 18,
+      marginTop: 5,
+      marginLeft: 15,
+      fontWeight: '300'
+    },
 });
