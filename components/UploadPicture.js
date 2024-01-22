@@ -1,6 +1,6 @@
 // React and react native imports
 import React, { useState, useEffect, createElement } from 'react';
-import { ActivityIndicator, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View, findNodeHandle } from 'react-native';
 
 // Third party libraries
 import {Camera, useCameraPermissions } from 'expo-camera';
@@ -11,6 +11,7 @@ import '@tensorflow/tfjs-react-native';
 import { bundleResourceIO, decodeJpeg } from '@tensorflow/tfjs-react-native';
 import OpenAI from 'openai';
 import 'react-native-url-polyfill/auto';
+import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
 
 // Local components and configurations
 import CameraDisplay from './CameraDisplay';
@@ -25,7 +26,9 @@ export default function UploadPicture({navigation}) {
   const [prediction, setPrediction] = useState(null);
   const [process, setProcess] = useState('');
   const openai = new OpenAI({apiKey: OPENAI_API_KEY});
+  const [correction, setCorrection] = useState('')
   const component = 'UploadPicture';
+  const [modalVisible, setModalVisible] = useState(false)
 
   // Loading the binary classifier model
   const loadModel = async (jsonPath) => {
@@ -55,7 +58,6 @@ export default function UploadPicture({navigation}) {
 
   // Use the model to classify the image as food/nonfood
   function makePredictions(model, imagesTensor) {
-    setProcess('Making predictions');
     const predictionsTensor = model.predict(imagesTensor);
     // Return the most probable instance
     const predictions = predictionsTensor.argMax(-1).dataSync();
@@ -74,33 +76,58 @@ export default function UploadPicture({navigation}) {
       return 'Not Food';
     } 
     else {
-      const predictions = await openai_prediction(image);
+      const predictions = await openai_prediction(image, '');
       return predictions;
     }
   }
 
   // Send an API request to determine what kind of food the image is, and how many calories are in it  (from OpenAI docs)
-  const openai_prediction = async (uri) => {
+  // If the correctFood param is not equal to the empty string, send the request assuming the type of food 
+  const openai_prediction = async (uri, correctFood) => {
+    setPrediction(null)
+    setProcess('Analyzing')
     const {uri: imageUri} = uri;
     const base64string = await FileSystem.readAsStringAsync(imageUri, {encoding: FileSystem.EncodingType.Base64});
-    const response = await openai.chat.completions.create({
-      model: "gpt-4-vision-preview",
-      messages: [
-        {
-          role: "user",
-          content: [
-            { type: "text", text: "What kind of food is in this image? Roughly how many calories are in it? Respond with only the type of food (do not exceed 8 words) and its corresponding number of calories (only the number). Format it like this: Food: \nCalories: \n" },
-            {
-              type: "image_url",
-              image_url: {
-                "url": `data:image/jpeg;base64,${base64string}`,
+    if (correctFood === '') {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4-vision-preview",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: "What kind of food is in this image? Roughly how many calories are in it? Respond with only the type of food (do not exceed 8 words) and its corresponding number of calories (only the number). Format it like this: Food: \nCalories: \n" },
+              {
+                type: "image_url",
+                image_url: {
+                  "url": `data:image/jpeg;base64,${base64string}`,
+                },
               },
-            },
-          ],
-        },
-      ],
-    });
-    return response.choices[0].message.content;
+            ],
+          },
+        ],
+      });
+      return response.choices[0].message.content
+    }
+    else {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4-vision-preview",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: `This image is of ${correctFood}. Roughly how many calories are in it? Respond with only the type of food and its corresponding number of calories (only the number). Format it like this: Food: ${correctFood}\nCalories: \n` },
+              {
+                type: "image_url",
+                image_url: {
+                  "url": `data:image/jpeg;base64,${base64string}`,
+                },
+              },
+            ],
+          },
+        ],
+      });
+      setPrediction(response.choices[0].message.content)
+    }
   }
 
   // Expo ImagePicker: allow the user to select an image from their photo library
@@ -136,37 +163,58 @@ export default function UploadPicture({navigation}) {
     fetchPredictions();
   }, [currentImg]);
 
-
-  
   return (
     <View style={{flex: 1}}>
         {/* When the camera isnt visible, show the menu to upload pictures */}
         {!cameraVisible &&
           <View style={styles.container}>
-            <View style={styles.imageContainer}>
-              <Image source={currentImg} style={styles.img} accessibilityLabel="placeholder image" />
+            <View style={{justifyContent: 'center', alignItems: 'center',}}>
+              <View style={styles.imageContainer}>
+                <Image source={currentImg} style={styles.img} accessibilityLabel="placeholder image" />
+              </View>
+              <TouchableOpacity style={styles.button} onPress={pickImageAsync}>
+                <Text style={styles.text}>Upload Photo</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.button} onPress={() => setCameraVisible(true)}>
+                <Text style={styles.text}>Take Photo</Text>
+              </TouchableOpacity>
+              {/* When a picture is uploaded and no prediction has been made yet, display the loading symbol and current process */}
+              {(currentImg !== placeholder && !prediction) &&
+                <View style={{marginTop: 10, flexDirection: 'row'}}>
+                  <Text style={styles.text}>{process}</Text>
+                  <ActivityIndicator size="small" style={{marginLeft: 5}}/>
+                </View>
+              }
+              {/* When a prediction has been made, display it */}
+              {prediction &&
+                <View style={{marginTop: 10}}>
+                  <Text style={styles.text}>
+                    {prediction}
+                  </Text>
+                  
+                </View>
+              }
+              {prediction &&
+                <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
+                  <Text style={{color: 'white', fontSize: 16, fontWeight: '200',}}>Mistake? Click here to correct it</Text>
+                </TouchableOpacity>
+              }
+              <Modal visible={modalVisible}>
+                  <View style={styles.modalContainer}>
+                      <TextInput style={styles.input} placeholder={'Mistake? Type in the correct food here!'} placeholderTextColor={'white'} value={correction} onChangeText={(newCorrection) => setCorrection(newCorrection)}/>
+                      <TouchableOpacity style={styles.button} onPress={() => {openai_prediction(currentImg, correction); setModalVisible(false)}}>
+                        <Text style={styles.text}>
+                          Confirm
+                        </Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.button} onPress={() => setModalVisible(false)}>
+                        <Text style={styles.text}>
+                          Back
+                        </Text>
+                      </TouchableOpacity>
+                  </View>
+              </Modal>
             </View>
-            <TouchableOpacity style={styles.button} onPress={pickImageAsync}>
-              <Text style={styles.text}>Upload Photo</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => setCameraVisible(true)}>
-              <Text style={styles.text}>Take Photo</Text>
-            </TouchableOpacity>
-            {/* When a picture is uploaded and no prediction has been made yet, display the loading symbol and current process */}
-            {(currentImg !== placeholder && !prediction) &&
-              <View style={{marginTop: 10, flexDirection: 'row'}}>
-                <Text style={styles.text}>{process}</Text>
-                <ActivityIndicator size="small" style={{marginLeft: 5}}/>
-              </View>
-            }
-            {/* When a prediction has been made, display it */}
-            {prediction &&
-              <View style={{marginTop: 10}}>
-                <Text style={styles.text}>
-                  {prediction}
-                </Text>
-              </View>
-            }
           </View>
         }
         {/* Camera is visible */}
@@ -185,13 +233,18 @@ export default function UploadPicture({navigation}) {
   );
 }
 
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: '#18191A',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 70
+    paddingTop: 80,
+  },
+  modalContainer: {
+    backgroundColor: '#18191A',
+    flex: 1, 
+    justifyContent: 'center', 
+    alignItems: 'center'
   },
   button: {
     marginTop: 10,
@@ -204,11 +257,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   imageContainer: {
-    padding: 10
+    paddingTop: 20
   },
   img : {
     width: 320,
-    height: 440,
+    height: 400,
     borderRadius: 18,
   },
   text: {
@@ -216,5 +269,18 @@ const styles = StyleSheet.create({
     fontSize: 'auto',
     fontSize: 16,
     fontWeight: 'bold'
-  }
+  },
+  input: {
+    marginTop: 20,
+    backgroundColor: "#3A3B3C",
+    borderRadius: 18,
+    width: 320,
+    paddingLeft: 24,
+    height: '7%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    color: 'white',
+    fontSize: 16,
+    fontWeight: '100',
+  },
 });
