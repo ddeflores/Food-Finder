@@ -127,34 +127,30 @@ export default function FoodLog({navigation}) {
             <View style={{justifyContent: 'center', alignItems: 'center', marginTop: 20}}>
               <Text style={styles.date}>{day}</Text>
             </View>
-            {dayMenuVisible &&
-              <Modal>
-                <View style={styles.modalContainer}>
-                  <DateTimePicker maximumDate={new Date()} dateFormat="dayofweek day month" mode="date" value={new Date(day)} display='spinner' onChange={setDate}/>
-                  <View style={{flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center'}}>
-                    <TouchableOpacity style={{marginHorizontal: 50}} onPress={() => {setDay(new Date().toDateString()); setDayMenuVisible(false)}}>
-                      <Text style={{paddingBottom: 20, color: 'white', fontWeight: 'bold', fontSize: 16}}>Reset</Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={{marginHorizontal: 50}} onPress={() => setDayMenuVisible(false)}>
-                      <Text style={{paddingBottom: 20, color: 'white', fontWeight: 'bold', fontSize: 16}}>Update</Text>
-                    </TouchableOpacity>
-                  </View>
+            <Modal visible={dayMenuVisible} animationType='fade'>
+              <View style={styles.modalContainer}>
+                <DateTimePicker maximumDate={new Date()} dateFormat="dayofweek day month" mode="date" value={new Date(day)} display='spinner' onChange={setDate}/>
+                <View style={{flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center'}}>
+                  <TouchableOpacity style={{marginHorizontal: 50}} onPress={() => {setDay(new Date().toDateString()); setDayMenuVisible(false)}}>
+                    <Text style={{paddingBottom: 20, color: 'white', fontWeight: 'bold', fontSize: 16}}>Reset</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={{marginHorizontal: 50}} onPress={() => setDayMenuVisible(false)}>
+                    <Text style={{paddingBottom: 20, color: 'white', fontWeight: 'bold', fontSize: 16}}>Update</Text>
+                  </TouchableOpacity>
                 </View>
-              </Modal>
-            }
-            {foodLogEditMode && 
-              <Modal>
-                <View style={styles.modalContainer}>
-                  <View style={{alignItems: 'center', justifyContent: 'center'}}>
-                    <TextInput style={styles.input} placeholder='  New Food Name:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setEditedFoodName(newFood)} defaultValue={editedFoodName}/>
-                    <TextInput style={styles.input} placeholder='  New Calorie Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setEditedCalories(newCalories)} defaultValue={editedCalories}/>
-                    <TouchableOpacity style={styles.button} onPress={() => editFoodLocally(editIndex, editedFoodName, editedCalories)}>
-                        <Text style={styles.text}>Confirm Changes</Text>
-                    </TouchableOpacity>
-                  </View>
+              </View>
+            </Modal>
+            <Modal visible={foodLogEditMode} animationType='fade'>
+              <View style={styles.modalContainer}>
+                <View style={{alignItems: 'center', justifyContent: 'center'}}>
+                  <TextInput style={styles.input} placeholder='  New Food Name:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setEditedFoodName(newFood)} defaultValue={editedFoodName}/>
+                  <TextInput style={styles.input} placeholder='  New Calorie Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setEditedCalories(newCalories)} defaultValue={editedCalories}/>
+                  <TouchableOpacity style={styles.button} onPress={() => editFoodLocally(editIndex, editedFoodName, editedCalories)}>
+                      <Text style={styles.text}>Confirm Changes</Text>
+                  </TouchableOpacity>
                 </View>
-              </Modal>
-            }
+              </View>
+            </Modal>
             <ScrollView style={styles.log}>
               {foods.map((food, index) => {
                 if (editVisible) {
@@ -295,6 +291,7 @@ const styles = StyleSheet.create({
         backgroundColor: '#3A3B3C',
         borderRadius: 8,
         marginTop: 50,
+        marginHorizontal: 20,
     },
     food: {
         color: "white",
@@ -309,7 +306,7 @@ const styles = StyleSheet.create({
       marginTop: 5,
       marginLeft: 15,
       fontWeight: '300'
-  },
+    },
     modalContainer: {
         flex: 1,
         backgroundColor: '#18191A',
