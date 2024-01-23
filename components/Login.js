@@ -14,7 +14,7 @@ export default function Login({navigation}) {
   function handleSignIn() {
     signInWithEmailAndPassword(FIREBASE_AUTH, email, password).then((userCredential) => {
       const user = userCredential.user;
-      navigation.reset({index: 0, routes: [{name: 'Logger'}]});
+      navigation.reset({index: 0, routes: [{name: 'FoodLog'}]});
     }).catch((error) => {
       const errorCode = error.code;
       const errorMessage = error.message;

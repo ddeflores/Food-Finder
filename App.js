@@ -23,7 +23,7 @@ export default function App() {
   useEffect(() => {
     FIREBASE_AUTH.onAuthStateChanged(function(user) {
       if (user) {
-        setInitialRoute('Upload Picture');
+        setInitialRoute('FoodLog');
       }
       else {
         setInitialRoute('Home');

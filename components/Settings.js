@@ -21,7 +21,7 @@ function Settings({navigation}) {
     async function handleReferral() {
         const { result } = SMS.sendSMSAsync(
             [],
-            'Reach your fitness goals with me on FoodFinder!\nhttps://linkedin.com/in/danieldeflores/'
+            'Reach your fitness goals with me on FoodFinder!\nhttps://github.com/ddeflores/Food-Finder'
         );
     }
 
