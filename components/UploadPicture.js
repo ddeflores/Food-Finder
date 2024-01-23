@@ -11,12 +11,13 @@ import '@tensorflow/tfjs-react-native';
 import { bundleResourceIO, decodeJpeg } from '@tensorflow/tfjs-react-native';
 import OpenAI from 'openai';
 import 'react-native-url-polyfill/auto';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view'
+import { ref, update, push, onValue} from 'firebase/database'
 
 // Local components and configurations
 import CameraDisplay from './CameraDisplay';
 import NavBar from './NavBar';
 import { OPENAI_API_KEY } from '@env';
+import { FIREBASE_DB, FIREBASE_AUTH } from '../firebaseConfig';
 
 export default function UploadPicture({navigation}) {
   const placeholder = require('../placeholder.png');
@@ -29,6 +30,32 @@ export default function UploadPicture({navigation}) {
   const [correction, setCorrection] = useState('')
   const component = 'UploadPicture';
   const [modalVisible, setModalVisible] = useState(false)
+  const [foodNames, setFoodNames] = useState([])
+  const [day, setDay] = useState(new Date().toDateString())
+
+  // Change the current day to log
+  useEffect(() => {
+    newDay = new Date().toDateString(); 
+    if (day !== newDay) {
+        setDay(newDay);
+    }
+  }, []);
+
+  // Fetch the list of foods and calories that the user has added
+  const foodsRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/foodNames')
+  const caloriesRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/calorieCounts')
+  useEffect(() => {
+      onValue(foodsRef, (snapshot) => {
+          data = snapshot.val()
+          tmpFoods = []
+          if (data) {
+              for (let i = 0; i < Object.keys(data).length; i++) {
+                  tmpFoods.push(data[Object.keys(data)[i]]['food'])
+              }
+              setFoodNames(tmpFoods)
+          }
+      })  
+  }, [])
 
   // Loading the binary classifier model
   const loadModel = async (jsonPath) => {
@@ -95,11 +122,12 @@ export default function UploadPicture({navigation}) {
           {
             role: "user",
             content: [
-              { type: "text", text: "What kind of food is in this image? Roughly how many calories are in it? Respond with only the type of food (do not exceed 8 words) and its corresponding number of calories (only the number). Format it like this: Food: \nCalories: \n" },
+              { type: "text", text: "What kind of food is in this image? Roughly how many calories are in it? Respond with only the type of food (do not exceed 5 words) and its corresponding number of calories (only the number). Do not under any circumstance respond without an estimate of calories, or a guess on what the food is. Format your response like this: Food: \nCalories: \n" },
               {
                 type: "image_url",
                 image_url: {
                   "url": `data:image/jpeg;base64,${base64string}`,
+                  detail: 'low'
                 },
               },
             ],
@@ -115,11 +143,12 @@ export default function UploadPicture({navigation}) {
           {
             role: "user",
             content: [
-              { type: "text", text: `This image is of ${correctFood}. Roughly how many calories are in it? Respond with only the type of food and its corresponding number of calories (only the number). Format it like this: Food: ${correctFood}\nCalories: \n` },
+              { type: "text", text: `This image is of ${correctFood}. Roughly how many calories are in it? Respond with only the type of food and its corresponding number of calories (only the number). Do not under any circumstance respond without an estimate of calories, or a guess on what the food is. Format your response like this: Food: ${correctFood}\nCalories: \n` },
               {
                 type: "image_url",
                 image_url: {
                   "url": `data:image/jpeg;base64,${base64string}`,
+                  detail: 'low'
                 },
               },
             ],
@@ -127,6 +156,7 @@ export default function UploadPicture({navigation}) {
         ],
       });
       setPrediction(response.choices[0].message.content)
+      setCorrection('')
     }
   }
 
@@ -162,6 +192,50 @@ export default function UploadPicture({navigation}) {
     };
     fetchPredictions();
   }, [currentImg]);
+
+  // Upload food to the database
+  function uploadFoodToDB(typeFood, numCalories) {
+    const newRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/logs/' + day + '/foods'));
+    update(newRef, {
+        food: typeFood,
+        calories: numCalories
+    }).catch((error) => {
+        alert(error);
+    });
+    const foodsRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/foodNames'))
+    const caloriesRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/calorieCounts'))
+    // If the food is not already stored in any of the users logs, add it to the comprehensive list 
+    if (!foodNames.includes(typeFood)) {
+        update(foodsRef, {
+            food: typeFood
+        }).catch((error) => {
+            alert(error);
+        });
+
+        update(caloriesRef, {
+            calories: numCalories
+        }).catch((error) => {
+            alert(error);
+        });
+    }
+}
+
+  // Upload food to database when a user confirms a prediction
+  function logFood(pred) {
+    predArr = pred.split('\n')
+    foodName = predArr[0].split(' ')
+    calorieCount = predArr[1].split(' ')
+    
+    food = ''
+    for (i = 1; i < foodName.length; i++) {
+      food += foodName[i] + ' '
+    }
+    calorie = ''
+    for (i = 1; i < calorieCount.length; i++) {
+      calorie += calorieCount[i]
+    }
+    uploadFoodToDB(food, calorie)
+  }
 
   return (
     <View style={{flex: 1}}>
@@ -199,9 +273,14 @@ export default function UploadPicture({navigation}) {
                   <Text style={{color: 'white', fontSize: 16, fontWeight: '200',}}>Mistake? Click here to correct it</Text>
                 </TouchableOpacity>
               }
+              {prediction && prediction !== 'Not Food' &&
+                <TouchableOpacity style={styles.button} onPress={() => logFood(prediction)}>
+                  <Text style={styles.text}>Log Food</Text>
+                </TouchableOpacity>
+              }
               <Modal visible={modalVisible}>
                   <View style={styles.modalContainer}>
-                      <TextInput style={styles.input} placeholder={'Mistake? Type in the correct food here!'} placeholderTextColor={'white'} value={correction} onChangeText={(newCorrection) => setCorrection(newCorrection)}/>
+                      <TextInput style={styles.input} placeholder={'Type in the correct food here!'} placeholderTextColor={'white'} value={correction} onChangeText={(newCorrection) => setCorrection(newCorrection)}/>
                       <TouchableOpacity style={styles.button} onPress={() => {openai_prediction(currentImg, correction); setModalVisible(false)}}>
                         <Text style={styles.text}>
                           Confirm
