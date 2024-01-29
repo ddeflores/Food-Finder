@@ -1,26 +1,29 @@
 // React and react native imports
-import { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react'
 import { Modal, ScrollView, StyleSheet, Text, TextInput, Touchable, TouchableOpacity, View } from 'react-native'
 
 // Third party libraries
-import { ref, update, push, onValue } from "firebase/database";
-import { FIREBASE_AUTH, FIREBASE_DB } from '../firebaseConfig';
+import { ref, update, push, onValue } from "firebase/database"
+import { FIREBASE_AUTH, FIREBASE_DB } from '../firebaseConfig'
 
 // Local components and configs
-import NavBar from './NavBar';
+import NavBar from './NavBar'
 
 export default function FoodLog({navigation}) {
-    const [food, setFood] = useState(null);
-    const [calories, setCalories] = useState(null);
-    const component = 'Logger';
+    const [food, setFood] = useState(null)
+    const [calories, setCalories] = useState(null)
+    const [protein, setProtein] = useState(null)
+    const component = 'Logger'
     const [day, setDay] = useState(new Date().toDateString())
     const [foodNames, setFoodNames] = useState([])
     const [calorieCounts, setCalorieCounts] = useState([])
+    const [proteinCounts, setProteinCounts] = useState([])
     const [foodLogModal, setFoodLogModal] = useState(false)
 
     // Fetch the list of foods and calories that the user has added
     const foodsRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/foodNames')
     const caloriesRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/calorieCounts')
+    const proteinRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/proteinCounts')
     useEffect(() => {
         onValue(foodsRef, (snapshot) => {
             data = snapshot.val()
@@ -42,6 +45,16 @@ export default function FoodLog({navigation}) {
                 setCalorieCounts(tmpCalories)
             }
         })  
+        onValue(proteinRef, (snapshot) => {
+            data = snapshot.val()
+            tmpProtein = []
+            if (data) {
+                for (let i = 0; i < Object.keys(data).length; i++) {
+                    tmpProtein.push(data[Object.keys(data)[i]]['protein'])
+                }
+                setProteinCounts(tmpProtein)
+            }
+        })  
     }, [])
 
     // Change the current day to log
@@ -53,16 +66,18 @@ export default function FoodLog({navigation}) {
     }, []);
 
     // Upload food to the database
-    function uploadFoodToDB(typeFood, numCalories) {
-        const newRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/logs/' + day + '/foods'));
+    function uploadFoodToDB(typeFood, numCalories, gramsProtein) {
+        const newRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/logs/' + day + '/foods'))
         update(newRef, {
             food: typeFood,
-            calories: numCalories
+            calories: numCalories,
+            protein: gramsProtein
         }).catch((error) => {
             alert(error);
         });
         const foodsRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/foodNames'))
         const caloriesRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/calorieCounts'))
+        const proteinRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/proteinCounts'))
         // If the food is not already stored in any of the users logs, add it to the comprehensive list 
         if (!foodNames.includes(typeFood)) {
             update(foodsRef, {
@@ -76,13 +91,20 @@ export default function FoodLog({navigation}) {
             }).catch((error) => {
                 alert(error);
             });
+
+            update(proteinRef, {
+                protein: gramsProtein
+            }).catch((error) => {
+                alert(error);
+            });
         }
     }
 
     // When a user chooses a food from the import modal, switch back to the regular logging screen with the chosen food inside of the input
-    function pickFoodToLog(foodName, numCalories) {
+    function pickFoodToLog(foodName, numCalories, numProtein) {
         setFood(foodName)
         setCalories(numCalories)
+        setProtein(numProtein)
         setFoodLogModal(false)
     }
 
@@ -93,7 +115,8 @@ export default function FoodLog({navigation}) {
                     <>
                         <TextInput style={styles.input} placeholder='  Food: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setFood(newFood)} defaultValue={food}/>
                         <TextInput style={styles.input} placeholder='  Calories: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setCalories(newCalories)} defaultValue={calories}/>
-                        <TouchableOpacity style={styles.button} onPress={() => uploadFoodToDB(food, calories)}>
+                        <TextInput style={styles.input} placeholder='  Protein: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newProtein => setProtein(newProtein)} defaultValue={protein}/>
+                        <TouchableOpacity style={styles.button} onPress={() => uploadFoodToDB(food, calories, protein)}>
                             <Text style={styles.text}>
                                 Log New Meal
                             </Text>
@@ -107,7 +130,7 @@ export default function FoodLog({navigation}) {
                             <ScrollView style={styles.modalFoodLog} contentContainerStyle={{justifyContent: 'flex-start', alignItems: 'flex-start',}}>
                                 {foodNames.length > 0 ? foodNames.map((food, index) => {
                                     return (
-                                        <TouchableOpacity key={index} onPress={() => pickFoodToLog(food, calorieCounts[index])}>
+                                        <TouchableOpacity key={index} onPress={() => pickFoodToLog(food, calorieCounts[index], proteinCounts[index])}>
                                             <Text style={styles.food}>
                                                 {food}
                                             </Text> 

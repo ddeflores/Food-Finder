@@ -15,6 +15,7 @@ export default function FoodLog({navigation}) {
     const component = 'FoodLog'
     const [foods, setFoods] = useState([])
     const [calories, setCalories] = useState([])
+    const [protein, setProtein] = useState([])
     const [day, setDay] = useState(new Date().toDateString())
     const [dayMenuVisible, setDayMenuVisible] = useState(false)
     const [editVisible, setEditVisible] = useState(false)
@@ -22,6 +23,7 @@ export default function FoodLog({navigation}) {
     const [foodLogEditMode, setFoodLogEditMode] = useState(false)
     const [editedFoodName, setEditedFoodName] = useState('')
     const [editedCalories, setEditedCalories] = useState('')
+    const [editedProtein, setEditedProtein] = useState('')
     const [editIndex, setEditIndex] = useState(null)
 
     // Initially show the food log, and update it whenever the date changes
@@ -37,15 +39,18 @@ export default function FoodLog({navigation}) {
         const data = snapshot.val();
         let tmpFoods = []
         let tmpCalories = []
+        let tmpProtein = []
         // Traverse through each key and add the food and calories to their respective arrays if there is a log on that day
         if (data) {
           for (let i = 0; i < Object.keys(data).length; i++) {
             tmpFoods.push((data[Object.keys(data)[i]]['food']))
             tmpCalories.push((data[Object.keys(data)[i]]['calories']))
+            tmpProtein.push((data[Object.keys(data)[i]]['protein']))
           }
           // Map each food and calories pair to the new food log, and update the state of the current food log
           setFoods(tmpFoods)
           setCalories(tmpCalories)
+          setProtein(tmpProtein)
         }
         else {
           setFoods(['No Log on\n' + day])
@@ -59,15 +64,21 @@ export default function FoodLog({navigation}) {
       const newFoods = [...foods]
       newFoods.splice(index, 1)
       setFoods(newFoods)
+
       const newCalories = [...calories]
       newCalories.splice(index, 1)
       setCalories(newCalories)
+
+      const newProtein = [...protein]
+      newProtein.splice(index, 1)
+      setProtein(newProtein)
+
       setFoodLogChanged(true)
     }
 
     // Display user edits for a food locally, but not on the database
-    function editFoodLocally(index, foodEdit, caloriesEdit) {
-      if (editedFoodName !== '' && editedCalories !== '') {
+    function editFoodLocally(index, foodEdit, caloriesEdit, proteinEdit) {
+      if (editedFoodName !== '' && editedCalories !== '' && editedProtein !== '') {
           // Edit foods list
           const newFoods = [...foods]
           newFoods.splice(index, 1, foodEdit)
@@ -80,12 +91,18 @@ export default function FoodLog({navigation}) {
           setFoodLogChanged(true)
           setFoodLogEditMode(false)
 
+          // Edit protein list
+          const newProtein = [...protein]
+          newProtein.splice(index, 1, proteinEdit)
+          setProtein(newProtein)
+
           // Reset states
           setFoodLogChanged(true)
           setFoodLogEditMode(false)
           editIndex.current = null
           setEditedFoodName('')
           setEditedCalories('')
+          setEditedProtein('')
       }
     }
 
@@ -97,7 +114,8 @@ export default function FoodLog({navigation}) {
           const newRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/logs/' + day + '/foods'))
           update(newRef, {
               food: typeFood,
-              calories: calories[index]
+              calories: calories[index],
+              protein: protein[index]
           }).catch((error) => {
               alert(error);
           })
@@ -145,7 +163,8 @@ export default function FoodLog({navigation}) {
                 <View style={{alignItems: 'center', justifyContent: 'center'}}>
                   <TextInput style={styles.input} placeholder='  New Food Name:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setEditedFoodName(newFood)} defaultValue={editedFoodName}/>
                   <TextInput style={styles.input} placeholder='  New Calorie Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setEditedCalories(newCalories)} defaultValue={editedCalories}/>
-                  <TouchableOpacity style={styles.button} onPress={() => editFoodLocally(editIndex, editedFoodName, editedCalories)}>
+                  <TextInput style={styles.input} placeholder='  New Protein Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newProtein => setEditedProtein(newProtein)} defaultValue={editedProtein}/>
+                  <TouchableOpacity style={styles.button} onPress={() => editFoodLocally(editIndex, editedFoodName, editedCalories, editedProtein)}>
                       <Text style={styles.text}>Confirm Changes</Text>
                   </TouchableOpacity>
                 </View>
@@ -162,6 +181,9 @@ export default function FoodLog({navigation}) {
                           </Text> 
                           <Text style={styles.calories}>
                             {!food.includes('No Log on') ? calories[index] + ' calories' : ''}
+                          </Text> 
+                          <Text style={styles.calories}>
+                            {!food.includes('No Log on') ? protein[index] + 'g protein' : ''}
                           </Text> 
                       </View>
                       <View style={{flexDirection: 'row'}}>
@@ -184,6 +206,9 @@ export default function FoodLog({navigation}) {
                       <Text style={styles.calories}> 
                         {!food.includes('No Log on') ? calories[index] + ' calories' : ''}
                       </Text>
+                      <Text style={styles.calories}>
+                        {!food.includes('No Log on') ? protein[index] + 'g protein' : ''}
+                      </Text> 
                     </View>
                   )
                 }
