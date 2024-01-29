@@ -1,6 +1,7 @@
 // React and react native imports
 import React, { useState, useEffect, createElement } from 'react';
 import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View, findNodeHandle } from 'react-native';
+import { ScrollView } from 'react-native';
 
 // Third party libraries
 import {Camera, useCameraPermissions } from 'expo-camera';
@@ -43,7 +44,6 @@ export default function UploadPicture({navigation}) {
 
   // Fetch the list of foods and calories that the user has added
   const foodsRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/foodNames')
-  const caloriesRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/calorieCounts')
   useEffect(() => {
       onValue(foodsRef, (snapshot) => {
           data = snapshot.val()
@@ -58,7 +58,7 @@ export default function UploadPicture({navigation}) {
   }, [])
 
   // Loading the binary classifier model
-  const loadModel = async (jsonPath) => {
+  const loadModel = async () => {
     setPrediction(null);
     setProcess('Analyzing');
     let modelJson = require('../assets/isFood.json');
@@ -95,8 +95,7 @@ export default function UploadPicture({navigation}) {
   // Gather results from the model, and if the image is of food send an API request for a detailed prediction
   const getPredictions = async (image) => {
     await tf.ready();
-    const model = await loadModel('classifier');
-    const isFoodModel = await loadModel('isFood');
+    const isFoodModel = await loadModel();
     const tensor_image = await transformImageToTensor(image);
     const isFood = await makePredictions(isFoodModel, tensor_image);
     if (isFood[0] === 1) {
@@ -122,7 +121,7 @@ export default function UploadPicture({navigation}) {
           {
             role: "user",
             content: [
-              { type: "text", text: "What kind of food is in this image? Roughly how many calories are in it? Respond with only the type of food (do not exceed 5 words) and its corresponding number of calories (only the number). Do not under any circumstance respond without an estimate of calories, or a guess on what the food is. Format your response like this: Food: \nCalories: \n" },
+              { type: "text", text: "What kind of food is in this image? Roughly how many calories are in it? Respond with only the type of food (do not exceed 5 words) and its corresponding number of calories (only the number). Do not under any circumstance respond without an estimate of calories, or a guess on what the food is. Format your response like this: Food: \nCalories: " },
               {
                 type: "image_url",
                 image_url: {
@@ -134,7 +133,20 @@ export default function UploadPicture({navigation}) {
           },
         ],
       });
-      return response.choices[0].message.content
+      const img_prediction = response.choices[0].message.content
+      const protein_prediction = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: `Estimate how many grams of protein are in ${img_prediction}. Format your response like this, and do not include the word "grams": Protein: \n`},
+            ],
+          },
+        ],
+      });
+      protein = protein_prediction.choices[0].message.content
+      return img_prediction + '\n' + protein
     }
     else {
       const response = await openai.chat.completions.create({
@@ -143,7 +155,7 @@ export default function UploadPicture({navigation}) {
           {
             role: "user",
             content: [
-              { type: "text", text: `This image is of ${correctFood}. Roughly how many calories are in it? Respond with only the type of food and its corresponding number of calories (only the number). Do not under any circumstance respond without an estimate of calories, or a guess on what the food is. Format your response like this: Food: ${correctFood}\nCalories: \n` },
+              { type: "text", text: `This image is of ${correctFood}. Roughly how many calories are in it? Respond with only the type of food and its corresponding number of calories (only the number). Do not under any circumstance respond without an estimate of calories, or a guess on what the food is. Format your response like this: Food: ${correctFood}\nCalories: ` },
               {
                 type: "image_url",
                 image_url: {
@@ -155,7 +167,20 @@ export default function UploadPicture({navigation}) {
           },
         ],
       });
-      setPrediction(response.choices[0].message.content)
+      const img_prediction = response.choices[0].message.content
+      const protein_prediction = await openai.chat.completions.create({
+        model: "gpt-4",
+        messages: [
+          {
+            role: "user",
+            content: [
+              { type: "text", text: `Estimate how many grams of protein are in ${img_prediction}. Format your response like this, and do not include the word "grams": Protein: \n`},
+            ],
+          },
+        ],
+      });
+      protein = protein_prediction.choices[0].message.content
+      setPrediction(img_prediction + '\n' + protein)
       setCorrection('')
     }
   }
@@ -194,16 +219,18 @@ export default function UploadPicture({navigation}) {
   }, [currentImg]);
 
   // Upload food to the database
-  function uploadFoodToDB(typeFood, numCalories) {
+  function uploadFoodToDB(typeFood, numCalories, gramsProtein) {
     const newRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/logs/' + day + '/foods'));
     update(newRef, {
         food: typeFood,
-        calories: numCalories
+        calories: numCalories,
+        protein: gramsProtein
     }).catch((error) => {
         alert(error);
     });
     const foodsRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/foodNames'))
     const caloriesRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/calorieCounts'))
+    const proteinRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/proteinCounts'))
     // If the food is not already stored in any of the users logs, add it to the comprehensive list 
     if (!foodNames.includes(typeFood)) {
         update(foodsRef, {
@@ -217,6 +244,12 @@ export default function UploadPicture({navigation}) {
         }).catch((error) => {
             alert(error);
         });
+
+        update(proteinRef, {
+          protein: gramsProtein
+      }).catch((error) => {
+          alert(error);
+      });
     }
 }
 
@@ -225,7 +258,8 @@ export default function UploadPicture({navigation}) {
     predArr = pred.split('\n')
     foodName = predArr[0].split(' ')
     calorieCount = predArr[1].split(' ')
-    
+    proteinCount = predArr[2].split(' ')
+
     food = ''
     for (i = 1; i < foodName.length; i++) {
       food += foodName[i] + ' '
@@ -234,14 +268,20 @@ export default function UploadPicture({navigation}) {
     for (i = 1; i < calorieCount.length; i++) {
       calorie += calorieCount[i]
     }
-    uploadFoodToDB(food, calorie)
+
+    protein = ''
+    for (i = 1; i < proteinCount.length; i++) {
+      protein += proteinCount[i]
+    }
+    uploadFoodToDB(food, calorie, protein)
   }
 
   return (
     <View style={{flex: 1}}>
         {/* When the camera isnt visible, show the menu to upload pictures */}
         {!cameraVisible &&
-          <View style={styles.container}>
+        <ScrollView style={styles.container}>
+          <View>
             <View style={{justifyContent: 'center', alignItems: 'center',}}>
               <View style={styles.imageContainer}>
                 <Image source={currentImg} style={styles.img} accessibilityLabel="placeholder image" />
@@ -265,7 +305,6 @@ export default function UploadPicture({navigation}) {
                   <Text style={styles.text}>
                     {prediction}
                   </Text>
-                  
                 </View>
               }
               {prediction &&
@@ -291,10 +330,17 @@ export default function UploadPicture({navigation}) {
                           Back
                         </Text>
                       </TouchableOpacity>
+                      <TouchableOpacity style={styles.button} onPress={() => {setModalVisible(false); openai_prediction(currentImg, '')}}>
+                          <Text style={styles.text}>
+                            Retry with Same Image
+                          </Text>
+                        </TouchableOpacity>
+                      
                   </View>
               </Modal>
             </View>
           </View>
+        </ScrollView>
         }
         {/* Camera is visible */}
         {cameraVisible &&
