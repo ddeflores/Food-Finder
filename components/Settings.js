@@ -1,6 +1,6 @@
 // React and react native imports
-import { useEffect, useState } from 'react';
-import { StyleSheet, Switch, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { useState } from 'react';
+import { Modal, StyleSheet, Switch, Text, TextInput, Touchable, TouchableOpacity, View } from 'react-native'
 
 // Third party libraries
 import { FIREBASE_AUTH } from '../firebaseConfig';
@@ -12,6 +12,7 @@ import NavBar from './NavBar';
 
 function Settings({navigation}) {
     const component = 'Settings'
+    const [logoutPressed, setLogoutPressed] = useState(false)
 
     function handleLogout() {
         signOut(FIREBASE_AUTH)
@@ -31,7 +32,7 @@ function Settings({navigation}) {
                 <Text style={styles.text}>Account Email:</Text>
                 <Text style={styles.infoText}>{FIREBASE_AUTH.currentUser.email}</Text>
                 <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={() => handleLogout()}>
+                    <TouchableOpacity style={styles.button} onPress={() => setLogoutPressed(true)}>
                         <Text style={styles.text}>
                             Logout
                         </Text>
@@ -43,6 +44,23 @@ function Settings({navigation}) {
                     </TouchableOpacity>
                 </View>
             </View>
+            <Modal visible={logoutPressed} animationType='fade'>
+                    <View style={styles.container}>
+                        <Text style={styles.confirmText}>
+                                Are you sure you want to Logout?
+                            </Text>
+                        <View style={styles.buttonContainer}>
+                            <TouchableOpacity style={styles.button} onPress={() => handleLogout()}>
+                                <Text style={styles.text}>
+                                    Yes
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.button} onPress={() => setLogoutPressed(false)}>
+                                <Text style={styles.text}>No, Take Me Back</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </View>
+            </Modal>
             <View style={{height: '10%', backgroundColor: '#3A3B3C'}}>
                 <NavBar navigation={navigation} component={component}/>
             </View>
@@ -115,7 +133,12 @@ const styles = StyleSheet.create({
     },
     information: {
         flexDirection: 'row'
-    }
+    },
+    confirmText: {
+        color: "white",
+        fontSize: 22,
+        fontWeight: '400',
+    },
 });
 
 
