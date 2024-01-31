@@ -1,6 +1,6 @@
 // React and react native imports
 import { useEffect, useState } from 'react'
-import { Modal, ScrollView, StyleSheet, Text, TextInput, Touchable, TouchableOpacity, View } from 'react-native'
+import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native'
 
 // Third party libraries
 import { ref, update, push, onValue } from "firebase/database"
@@ -8,17 +8,80 @@ import { FIREBASE_AUTH, FIREBASE_DB } from '../firebaseConfig'
 
 // Local components and configs
 import NavBar from './NavBar'
+import {FOOD_DB_API_KEY } from '@env'
+
 
 export default function FoodLog({navigation}) {
-    const [food, setFood] = useState(null)
-    const [calories, setCalories] = useState(null)
-    const [protein, setProtein] = useState(null)
+    const [food, setFood] = useState(null) // For logging via user input
+    const [calories, setCalories] = useState(null) // For logging via user input
+    const [protein, setProtein] = useState(null) // For logging via user input
     const component = 'Logger'
-    const [day, setDay] = useState(new Date().toDateString())
-    const [foodNames, setFoodNames] = useState([])
-    const [calorieCounts, setCalorieCounts] = useState([])
-    const [proteinCounts, setProteinCounts] = useState([])
-    const [foodLogModal, setFoodLogModal] = useState(false)
+
+    const [day, setDay] = useState(new Date().toDateString()) // For updating log dates in the database
+
+    const [foodNames, setFoodNames] = useState([]) // For displaying past foods the user has logged
+    const [calorieCounts, setCalorieCounts] = useState([]) // For displaying past food log calories
+    const [proteinCounts, setProteinCounts] = useState([]) // For displaying past food log calories
+
+    const [foodLogModal, setFoodLogModal] = useState(false) // For changing visiblity of the food log modal
+
+    const [search, setSearch] = useState('') // For user's searching the database by HTTP request
+    const [searchFoodMacros, setSearchFoodMacros] = useState([]) // For displaying search results
+    const [searchFoodNames, setSearchFoodNames] = useState([]) // For displaying search results
+    const [showSearchModal, setShowSearchModal] = useState(false) // For changing visibility of the search modal
+    const [process, setProcess] = useState('')
+
+    // Search the food database by making a HTTP request
+    const searchFoodDatabase = async (searchParameter) => {
+        setProcess('Searching')
+        // Make sure that the search is not empty
+        if (searchParameter != '') {
+            fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${FOOD_DB_API_KEY}&query=${searchParameter}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                // Store each food name for future indexing
+                const tmpFoodNames = []
+                const tmpMacrosList = []
+                data.foods.map((food) => {
+                    let foodName = food.description
+                    const macros = []
+                    // Map each macro and calories to the same index as their food name 
+                    food.foodNutrients.map((tmp) => {
+                        const tmpMacro = tmp.nutrientName
+                        if (tmpMacro === 'Protein') {
+                            macros.push(['Protein: ', (tmp.value).toString()])
+                        }
+                        else if (tmpMacro === 'Total Lipid (fat)') {
+                            macros.push(['Fat: ', (tmp.value).toString()])
+                        }
+                        else if (tmpMacro === 'Carbohydrate, by difference') {
+                            macros.push(['Carbs: ', (tmp.value).toString()])
+                        }
+                        else if ((tmpMacro === 'Energy' && tmp.unitName === 'KCAL')) {
+                            macros.push(['Calories: ', (tmp.value).toString()])
+                        }
+                    })
+                    if (food.hasOwnProperty('brandName')) {
+                        foodName = foodName + ' ' + food.brandName
+                    }
+                    // Update the lists to display
+                    tmpFoodNames.push(foodName)
+                    setSearchFoodNames(tmpFoodNames)
+                    tmpMacrosList.push(macros)
+                })
+                setSearchFoodMacros(tmpMacrosList)
+            })
+            .catch(error => {
+                console.error('There was a problem with your search:', error);
+            });
+        }
+        setProcess('')
+    }
 
     // Fetch the list of foods and calories that the user has added
     const foodsRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/foodNames')
@@ -118,11 +181,16 @@ export default function FoodLog({navigation}) {
                         <TextInput style={styles.input} placeholder='  Protein: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newProtein => setProtein(newProtein)} defaultValue={protein}/>
                         <TouchableOpacity style={styles.button} onPress={() => uploadFoodToDB(food, calories, protein)}>
                             <Text style={styles.text}>
-                                Log New Meal
+                                Log this Meal
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.button} onPress={() => setFoodLogModal(true)}>
                             <Text style={styles.text}>Import meal from your food logs</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity style={styles.button} onPress={() => setShowSearchModal(true)}>
+                            <Text style={styles.text}>
+                                Search For A Food
+                            </Text>
                         </TouchableOpacity>
                     </>
                     <Modal visible={foodLogModal} animationType='fade' presentationStyle='overFullScreen'>
@@ -144,6 +212,39 @@ export default function FoodLog({navigation}) {
                                 }
                             </ScrollView>
                             <TouchableOpacity style={styles.backButton} onPress={() => navigation.reset({index: 0, routes: [{name: 'Logger'}]})}>
+                                <Text style={styles.text}>Back</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </Modal>
+                    <Modal visible={showSearchModal} animationType='fade' presentationStyle='overFullScreen'>
+                        <View style={styles.searchModalContainer}>
+                            <TextInput style={styles.searchInput} placeholder='  Search for a Food: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newSearch => setSearch(newSearch)} defaultValue={search}/>
+                            <TouchableOpacity style={styles.searchButton} onPress={() => searchFoodDatabase(search)}>
+                                <Text style={styles.text}>Search Food Database</Text>
+                            </TouchableOpacity>
+                            {process == 'Searching' && 
+                            <>
+                                <Text style={styles.text}>{process}</Text>
+                                <ActivityIndicator size="small" style={{marginLeft: 5}}/>
+                            </>
+                            }
+                            <ScrollView style={styles.searchModalFoodLog} contentContainerStyle={{justifyContent: 'flex-start', alignItems: 'flex-start',}}>
+                                {searchFoodNames.length > 0 ? searchFoodNames.map((food, index) => {
+                                    return (
+                                        <TouchableOpacity key={index} onPress={() => pickFoodToLog(food, calorieCounts[index], proteinCounts[index])}>
+                                            <Text style={styles.food}>
+                                                {food}
+                                            </Text> 
+                                            <Text style={styles.calories} key={index}>
+                                                {searchFoodMacros[index]}
+                                            </Text>
+                                        </TouchableOpacity>
+                                    )
+                                }) :
+                                    <Text style={styles.text}>You have no foods logged!</Text>
+                                }
+                            </ScrollView>
+                            <TouchableOpacity style={styles.backButton} onPress={() => {setShowSearchModal(false); setSearchFoodMacros([]); setSearchFoodNames([])}}>
                                 <Text style={styles.text}>Back</Text>
                             </TouchableOpacity>
                         </View>
@@ -240,5 +341,50 @@ const styles = StyleSheet.create({
       marginTop: 5,
       marginLeft: 15,
       fontWeight: '300'
+    },
+    modal: {
+        width: '90%',
+        backgroundColor: '#3A3B3C',
+        borderRadius: 18,
+        marginTop: '25%',
+        marginBottom: '10%'
+    },
+    searchInput: {
+        marginTop: 10,
+        backgroundColor: "#3A3B3C",
+        borderRadius: 18,
+        width: 320,
+        paddingLeft: 20,
+        height: '5%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        color: 'white',
+        fontSize: 16,
+        fontWeight: '100'
+    },
+    searchButton: {
+        marginTop: 10,
+        backgroundColor: "#3A3B3C",
+        borderRadius: 18,
+        width: 320,
+        height: '5%',
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    searchModalContainer: {
+        paddingTop: '30%',
+        flex: 1,
+        backgroundColor: '#18191A',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    searchModalFoodLog: {
+        width: '90%',
+        backgroundColor: '#3A3B3C',
+        borderRadius: 18,
+        marginTop: '10%',
+        marginBottom: '10%'
     },
 });
