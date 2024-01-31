@@ -99,44 +99,72 @@ export default function FoodLog({navigation}) {
 
     // Display user edits for a food locally, but not on the database
     function editFoodLocally(index, foodEdit, caloriesEdit, proteinEdit, fatEdit, carbEdit) {
-      if (editedFoodName !== '' && editedCalories !== '' && editedProtein !== '' && editedCarb !== '' && editedFat !== '') {
-          // Edit foods list
-          const newFoods = [...foods]
-          newFoods.splice(index, 1, foodEdit)
-          setFoods(newFoods)
+        // Edit foods list
+        if (editedFoodName !== '') {
+            const newFoods = [...foods]
+            newFoods.splice(index, 1, foodEdit)
+            setFoods(newFoods)
+        } else {
+            const newFoods = [...foods]
+            newFoods.splice(index, 1, foods[index])
+            setFoods(newFoods)
+        }
+        
+        // Edit calories list
+        if (editedCalories !== '') {
+            const newCalories = [...calories]
+            newCalories.splice(index, 1, caloriesEdit)
+            setCalories(newCalories)
+        } else {
+            const newCalories = [...calories]
+            newCalories.splice(index, 1, calories[index])
+            setCalories(newCalories)
+        }
 
-          // Edit calories list
-          const newCalories = [...calories]
-          newCalories.splice(index, 1, caloriesEdit)
-          setCalories(newCalories)
-          setFoodLogChanged(true)
-          setFoodLogEditMode(false)
+        // Edit protein list
+        if (editedProtein !== '') {
+            const newProtein = [...protein]
+            newProtein.splice(index, 1, proteinEdit)
+            setProtein(newProtein)
+        } else {
+            const newProtein = [...protein]
+            newProtein.splice(index, 1, protein[index])
+            setProtein(newProtein)
+        }
 
-          // Edit protein list
-          const newProtein = [...protein]
-          newProtein.splice(index, 1, proteinEdit)
-          setProtein(newProtein)
-
-          // Edit fat list
+        // Edit fat list
+        if (editedFat !== '') {
+            const newFats = [...fats]
+            newFats.splice(index, 1, fatEdit)
+            setFats(newFats)
+        } else {
           const newFats = [...fats]
-          newFats.splice(index, 1, fatEdit)
+          newFats.splice(index, 1, fats[index])
           setFats(newFats)
+        }
 
-          // Edit carb list
+        // Edit carb list
+        if (editedCarb !== '') {
+            const newCarbs = [...carbs]
+            newCarbs.splice(index, 1, carbEdit)
+            setCarbs(newCarbs)
+        } else {
           const newCarbs = [...carbs]
-          newCarbs.splice(index, 1, carbEdit)
+          newCarbs.splice(index, 1, carbs[index])
           setCarbs(newCarbs)
+        }
 
           // Reset states
           setFoodLogChanged(true)
           setFoodLogEditMode(false)
-          editIndex.current = null
+          setEditIndex(null)
           setEditedFoodName('')
           setEditedCalories('')
           setEditedProtein('')
           setEditedFat('')
           setEditedCarb('')
-      }
+          setFoodLogChanged(true)
+          setFoodLogEditMode(false)
     }
 
     // Reflect changes locally (deletes and/or edits) in the database
@@ -162,6 +190,11 @@ export default function FoodLog({navigation}) {
     function confirmEdits() {
       if (editVisible && foodLogChanged) {
           updateDB()
+          setEditedFoodName('')
+          setEditedCalories('')
+          setEditedProtein('')
+          setEditedFat('')
+          setEditedCarb('')
       }
       if (!foods.includes('No Log on\n' + day)) {
           setEditVisible(!editVisible)
@@ -196,11 +229,11 @@ export default function FoodLog({navigation}) {
             <Modal visible={foodLogEditMode} animationType='fade'>
               <View style={styles.modalContainer}>
                 <View style={{alignItems: 'center', justifyContent: 'center'}}>
-                  <TextInput style={styles.editInput} placeholder='  New Food Name:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setEditedFoodName(newFood)} defaultValue={editedFoodName}/>
-                  <TextInput style={styles.editInput} placeholder='  New Calorie Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setEditedCalories(newCalories)} defaultValue={editedCalories}/>
-                  <TextInput style={styles.editInput} placeholder='  New Protein Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newProtein => setEditedProtein(newProtein)} defaultValue={editedProtein}/>
-                  <TextInput style={styles.editInput} placeholder='  New Fat Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFat => setEditedFat(newFat)} defaultValue={editedFat}/>
-                  <TextInput style={styles.editInput} placeholder='  New Carb Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCarb => setEditedCarb(newCarb)} defaultValue={editedCarb}/>
+                  <TextInput style={styles.editInput} placeholder={foods[editIndex] + ': Food'} placeholderTextColor='white' onChangeText={newFood => setEditedFoodName(newFood)} value={editedFoodName}/>
+                  <TextInput style={styles.editInput} placeholder={calories[editIndex] + ': Calories'} placeholderTextColor='white' onChangeText={newCalories => setEditedCalories(newCalories)} value={editedCalories}/>
+                  <TextInput style={styles.editInput} placeholder={protein[editIndex] + ': Protein'} placeholderTextColor='white' onChangeText={newProtein => setEditedProtein(newProtein)} value={editedProtein}/>
+                  <TextInput style={styles.editInput} placeholder={fats[editIndex] + ': Fat'} placeholderTextColor='white' onChangeText={newFat => setEditedFat(newFat)} value={editedFat}/>
+                  <TextInput style={styles.editInput} placeholder={carbs[editIndex] + ': Carbs'} placeholderTextColor='white' onChangeText={newCarb => setEditedCarb(newCarb)} value={editedCarb}/>
                   <TouchableOpacity style={styles.editModeButton} onPress={() => editFoodLocally(editIndex, editedFoodName, editedCalories, editedProtein, editedFat, editedCarb)}>
                       <Text style={styles.text}>Confirm Changes</Text>
                   </TouchableOpacity>
