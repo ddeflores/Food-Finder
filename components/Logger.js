@@ -53,7 +53,7 @@ export default function FoodLog({navigation}) {
             .then(data => {
                 // Store each food name for future indexing
                 data.foods.map((food) => {
-                    let foodName = food.description
+                    const foodName = food.description
                     const macros = []
                     // Map each macro and calories to the same index as their food name 
                     food.foodNutrients.map((tmp) => {
@@ -72,12 +72,13 @@ export default function FoodLog({navigation}) {
                         }
                     })
                     if (food.hasOwnProperty('brandName')) {
-                        foodName = food.brandName + ' ' + foodName
+                        tmpFoodNames.push(food.brandName + ' ' + foodName)
                     }
-                    tmpFoodNames.push(foodName)
+                    else {
+                        tmpFoodNames.push(foodName)
+                    }
                     tmpMacrosList.push(macros)
                 })
-                console.log(tmpFoodNames)
                 setSearchFoodNames(tmpFoodNames)
                 setSearchFoodMacros(tmpMacrosList)
             })
@@ -271,7 +272,7 @@ export default function FoodLog({navigation}) {
                                 <Text style={styles.text}>Search Food Database</Text>
                             </TouchableOpacity>
                             <ScrollView style={styles.searchModalFoodLog} contentContainerStyle={{justifyContent: 'flex-start', alignItems: 'flex-start',}}>
-                                {searchFoodNames ? searchFoodNames.map((food, index) => {
+                                {(searchFoodNames.length > 0 && searchFoodNames.length === searchFoodMacros.length) ? searchFoodNames.map((food, index) => {
                                     return (
                                         <TouchableOpacity style={{paddingBottom: 5, width: '100%'}} key={index} onPress={() => pickFoodToLog(food, searchFoodMacros[index][3], searchFoodMacros[index][0], searchFoodMacros[index][1], searchFoodMacros[index][2])}>
                                             <Text style={styles.food}>
