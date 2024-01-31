@@ -60,7 +60,7 @@ export default function UploadPicture({navigation}) {
   // Loading the binary classifier model
   const loadModel = async () => {
     setPrediction(null);
-    setProcess('Analyzing');
+    setProcess('Processing image, this may take a moment');
     let modelJson = require('../assets/isFood.json');
     let modelWeights = require('../assets/isFoodBin.bin');
     const model = await tf.loadLayersModel(bundleResourceIO(modelJson, modelWeights));
@@ -85,6 +85,7 @@ export default function UploadPicture({navigation}) {
 
   // Use the model to classify the image as food/nonfood
   function makePredictions(model, imagesTensor) {
+    setProcess('Checking if Picture is of Food')
     const predictionsTensor = model.predict(imagesTensor);
     // Return the most probable instance
     const predictions = predictionsTensor.argMax(-1).dataSync();
@@ -96,12 +97,16 @@ export default function UploadPicture({navigation}) {
   const getPredictions = async (image) => {
     await tf.ready();
     const isFoodModel = await loadModel();
-    const tensor_image = await transformImageToTensor(image);
-    const isFood = await makePredictions(isFoodModel, tensor_image);
+    const tensor_image = await transformImageToTensor(image).catch((error) => {
+      alert('Image Processing ' + error)
+      throw new Error(error)
+    });
+    const isFood = makePredictions(isFoodModel, tensor_image);
     if (isFood[0] === 1) {
       return 'Not Food';
     } 
     else {
+      setProcess('Fetching results')
       const predictions = await openai_prediction(image, '');
       return predictions;
     }
@@ -213,6 +218,7 @@ export default function UploadPicture({navigation}) {
       if (currentImg !== placeholder) {
         const predictions = await getPredictions(currentImg);
         setPrediction(predictions);
+        setProcess('')
       }
     };
     fetchPredictions();
@@ -350,8 +356,7 @@ export default function UploadPicture({navigation}) {
                           <Text style={styles.text}>
                             Retry with Same Image
                           </Text>
-                        </TouchableOpacity>
-                      
+                      </TouchableOpacity>
                   </View>
               </Modal>
             </View>

@@ -11,7 +11,7 @@ import NavBar from './NavBar'
 import {FOOD_DB_API_KEY } from '@env'
 
 
-export default function FoodLog({navigation}) {
+export default function FoodLog({navigation}, searchParameterFromPicture) {
     // NavBar prop
     const component = 'Logger'
     // For logging via user input

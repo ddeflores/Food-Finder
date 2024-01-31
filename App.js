@@ -41,7 +41,7 @@ export default function App() {
         <Stack.Screen name="Login" component={Login} options={{headerShown: false, animation: 'fade', animationDuration: 150}}/>
         <Stack.Screen name="SignUp" component={SignUp} options={{headerShown: false, animation: 'fade', animationDuration: 150}}/>
         <Stack.Screen name="Upload Picture" component={UploadPicture} options={{headerShown: false, animation: 'fade', animationDuration: 150}}/>
-        <Stack.Screen name="Logger" component={Logger} options={{headerShown: false, animation: 'fade', animationDuration: 150}}/>
+        <Stack.Screen name="Logger" initialParams={{searchParameterFromPicture: ''}} component={Logger} options={{headerShown: false, animation: 'fade', animationDuration: 150}}/>
         <Stack.Screen name="FoodLog" component={FoodLog} options={{headerShown: false, animation: 'fade', animationDuration: 150}}/>
         <Stack.Screen name="Settings" component={Settings} options={{headerShown: false, animation: 'fade', animationDuration: 150}}/>
         {/*<Stack.Screen name="Workouts" component={FitnessPage} options={{headerShown: false}}/>*/}
