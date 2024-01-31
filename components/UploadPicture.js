@@ -226,7 +226,7 @@ export default function UploadPicture({navigation}) {
         calories: numCalories,
         protein: gramsProtein,
         fat: 'N/A',
-        carbs: 'N/A'
+        carb: 'N/A'
     }).catch((error) => {
         alert(error);
     });
