@@ -1,6 +1,6 @@
 // React and react native imports
 import { useEffect, useState } from 'react'
-import { Modal, ScrollView, StyleSheet, Text, TextInput, Touchable, TouchableOpacity, View } from 'react-native'
+import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
 
 // Third party libraries
 import { ref, update, push, onValue } from "firebase/database"
@@ -8,6 +8,8 @@ import { FIREBASE_AUTH, FIREBASE_DB } from '../firebaseConfig'
 
 // Local components and configs
 import NavBar from './NavBar'
+import {FOOD_DB_API_KEY } from '@env'
+
 
 export default function FoodLog({navigation}) {
     const [food, setFood] = useState(null)
@@ -19,6 +21,38 @@ export default function FoodLog({navigation}) {
     const [calorieCounts, setCalorieCounts] = useState([])
     const [proteinCounts, setProteinCounts] = useState([])
     const [foodLogModal, setFoodLogModal] = useState(false)
+    const [showDatabase, setShowDatabase] = useState(false)
+    const [search, setSearch] = useState('')
+
+    const searchFoodDatabase = async (searchParameter) => {
+        if (searchParameter != '') {
+            fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${FOOD_DB_API_KEY}&query=${searchParameter}`)
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                return response.json();
+            })
+            .then(data => {
+                data.foods.map((food, index) => {
+                    console.log(food.description)
+                    if (food.hasOwnProperty('brandName')) {
+                        console.log(food.brandName)
+                    }
+                    food.foodNutrients.map((tmp) => {
+                        let macro = tmp.nutrientName
+                        if (macro === 'Protein' || macro === 'Total Lipid (fat)' || macro === 'Carbohydrate, by difference' || (macro === 'Energy' && tmp.unitName === 'KCAL')) {
+                            console.log(macro, ((tmp.value) + (tmp.unitName)))
+                        }
+                    })
+                    console.log()
+                })
+            })
+            .catch(error => {
+                console.error('There was a problem with your search:', error);
+            });
+        }
+    }
 
     // Fetch the list of foods and calories that the user has added
     const foodsRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/foodNames')
@@ -113,12 +147,16 @@ export default function FoodLog({navigation}) {
             <View style={styles.container}>
                 <View style={styles.buttonContainer}>
                     <>
+                    <TextInput style={styles.input} placeholder='  Search for a Food: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newSearch => setSearch(newSearch)} defaultValue={search}/>
+                        <TouchableOpacity style={styles.button} onPress={() => searchFoodDatabase(search)}>
+                            <Text style={styles.text}>Search Food Database</Text>
+                        </TouchableOpacity>
                         <TextInput style={styles.input} placeholder='  Food: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setFood(newFood)} defaultValue={food}/>
                         <TextInput style={styles.input} placeholder='  Calories: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setCalories(newCalories)} defaultValue={calories}/>
                         <TextInput style={styles.input} placeholder='  Protein: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newProtein => setProtein(newProtein)} defaultValue={protein}/>
                         <TouchableOpacity style={styles.button} onPress={() => uploadFoodToDB(food, calories, protein)}>
                             <Text style={styles.text}>
-                                Log New Meal
+                                Log this Meal
                             </Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.button} onPress={() => setFoodLogModal(true)}>
@@ -142,6 +180,18 @@ export default function FoodLog({navigation}) {
                                 }) :
                                     <Text style={styles.text}>You have no foods logged!</Text>
                                 }
+                            </ScrollView>
+                            <TouchableOpacity style={styles.backButton} onPress={() => navigation.reset({index: 0, routes: [{name: 'Logger'}]})}>
+                                <Text style={styles.text}>Back</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </Modal>
+                    <Modal visible={showDatabase} animationType='fade' presentationStyle='overFullScreen'>
+                        <View style={styles.modalContainer}>
+                            <ScrollView style={styles.modalFoodLog} contentContainerStyle={{justifyContent: 'flex-start', alignItems: 'flex-start',}}>
+                                <TouchableOpacity onPress={() => setShowDatabase(false)}>
+                                    <Text style={styles.text}> Back </Text>
+                                </TouchableOpacity>
                             </ScrollView>
                             <TouchableOpacity style={styles.backButton} onPress={() => navigation.reset({index: 0, routes: [{name: 'Logger'}]})}>
                                 <Text style={styles.text}>Back</Text>
