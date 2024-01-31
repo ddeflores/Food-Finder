@@ -46,7 +46,16 @@ export default function FoodLog({navigation}) {
             fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${FOOD_DB_API_KEY}&query=${searchParameter}`)
             .then(response => {
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    alert('Network response was not successful.');
+                }
+                if (response.headers.get('x-ratelimit-remaining')) {
+                    let tmp = response.headers.get('x-ratelimit-remaining')
+                    if (tmp === '10') {
+                        alert("Notice: You only have 10 searches left! (1000 per hour).")
+                    }
+                    if (tmp === '3524') {
+                        throw Error('Out of searches')
+                    }
                 }
                 return response.json();
             })
@@ -79,11 +88,17 @@ export default function FoodLog({navigation}) {
                     }
                     tmpMacrosList.push(macros)
                 })
-                setSearchFoodNames(tmpFoodNames)
-                setSearchFoodMacros(tmpMacrosList)
+                if (tmpFoodNames.length === 0) {
+                    setSearchFoodNames(['Sorry!'])
+                    setSearchFoodMacros([['No Results Found.']])
+                }
+                else {
+                    setSearchFoodNames(tmpFoodNames)
+                    setSearchFoodMacros(tmpMacrosList)
+                }
             })
             .catch(error => {
-                console.error('There was a problem with your search:', error);
+                alert("You've reached your search limit of 1000 per hour! Try again in a little while.")
             });
         }
     }
@@ -204,16 +219,6 @@ export default function FoodLog({navigation}) {
                 alert(error);
             });
         }
-    }
-
-    // When a user chooses a food from the import modal, switch back to the regular logging screen with the chosen food inside of the input
-    function pickFoodToLog(foodName, numCalories, numProtein, gramsFat, gramsCarb) {
-        setFood(foodName)
-        setCalories(numCalories)
-        setProtein(numProtein)
-        setFat(gramsFat)
-        setCarbs(gramsCarb)
-        setFoodLogModal(false)
     }
 
     return (
