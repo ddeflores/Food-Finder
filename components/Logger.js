@@ -12,30 +12,37 @@ import {FOOD_DB_API_KEY } from '@env'
 
 
 export default function FoodLog({navigation}) {
-    const [food, setFood] = useState(null) // For logging via user input
-    const [calories, setCalories] = useState(null) // For logging via user input
-    const [protein, setProtein] = useState(null) // For logging via user input
+    // NavBar prop
     const component = 'Logger'
-
-    const [day, setDay] = useState(new Date().toDateString()) // For updating log dates in the database
-
-    const [foodNames, setFoodNames] = useState([]) // For displaying past foods the user has logged
-    const [calorieCounts, setCalorieCounts] = useState([]) // For displaying past food log calories
-    const [proteinCounts, setProteinCounts] = useState([]) // For displaying past food log calories
-
-    const [foodLogModal, setFoodLogModal] = useState(false) // For changing visiblity of the food log modal
-
-    const [search, setSearch] = useState('') // For user's searching the database by HTTP request
-    const [searchFoodMacros, setSearchFoodMacros] = useState([]) // For displaying search results
-    const [searchFoodNames, setSearchFoodNames] = useState([]) // For displaying search results
-    const [showSearchModal, setShowSearchModal] = useState(false) // For changing visibility of the search modal
-    const [process, setProcess] = useState('')
-
+    // For logging via user input
+    const [food, setFood] = useState(null) 
+    const [calories, setCalories] = useState(null) 
+    const [protein, setProtein] = useState(null) 
+    const [fat, setFat] = useState(null)
+    const [carbs, setCarbs] = useState(null)
+    // Day to log to
+    const [day, setDay] = useState(new Date().toDateString()) 
+    // Past food logs
+    const [foodNames, setFoodNames] = useState([]) 
+    const [calorieCounts, setCalorieCounts] = useState([]) 
+    const [proteinCounts, setProteinCounts] = useState([])
+    const [fatCounts, setFatCounts] = useState([])
+    const [carbCounts, setCarbCounts] = useState([]) 
+     // For changing visiblity of modals
+    const [foodLogModal, setFoodLogModal] = useState(false)
+    const [logNewMealVisible, setLogNewMealVisible] = useState(false)
+    const [showSearchModal, setShowSearchModal] = useState(false)
+    // For searching the database by HTTP request, updating, and displaying the results
+    const [search, setSearch] = useState('') 
+    const [searchFoodMacros, setSearchFoodMacros] = useState([]) 
+    const [searchFoodNames, setSearchFoodNames] = useState([]) 
+    
     // Search the food database by making a HTTP request
-    const searchFoodDatabase = async (searchParameter) => {
-        setProcess('Searching')
+    const searchFoodDatabase = (searchParameter) => {
         // Make sure that the search is not empty
         if (searchParameter != '') {
+            const tmpFoodNames = []
+            const tmpMacrosList = []
             fetch(`https://api.nal.usda.gov/fdc/v1/foods/search?api_key=${FOOD_DB_API_KEY}&query=${searchParameter}`)
             .then(response => {
                 if (!response.ok) {
@@ -45,8 +52,6 @@ export default function FoodLog({navigation}) {
             })
             .then(data => {
                 // Store each food name for future indexing
-                const tmpFoodNames = []
-                const tmpMacrosList = []
                 data.foods.map((food) => {
                     let foodName = food.description
                     const macros = []
@@ -54,39 +59,40 @@ export default function FoodLog({navigation}) {
                     food.foodNutrients.map((tmp) => {
                         const tmpMacro = tmp.nutrientName
                         if (tmpMacro === 'Protein') {
-                            macros.push(['Protein: ', (tmp.value).toString()])
+                            macros.push(['Protein: ', tmp.value])
                         }
-                        else if (tmpMacro === 'Total Lipid (fat)') {
-                            macros.push(['Fat: ', (tmp.value).toString()])
+                        else if (tmpMacro === 'Total lipid (fat)') {
+                            macros.push(['Fat: ', tmp.value])
                         }
                         else if (tmpMacro === 'Carbohydrate, by difference') {
-                            macros.push(['Carbs: ', (tmp.value).toString()])
+                            macros.push(['Carbs: ', tmp.value])
                         }
                         else if ((tmpMacro === 'Energy' && tmp.unitName === 'KCAL')) {
-                            macros.push(['Calories: ', (tmp.value).toString()])
+                            macros.push(['Calories: ', tmp.value])
                         }
                     })
                     if (food.hasOwnProperty('brandName')) {
-                        foodName = foodName + ' ' + food.brandName
+                        foodName = food.brandName + ' ' + foodName
                     }
-                    // Update the lists to display
                     tmpFoodNames.push(foodName)
-                    setSearchFoodNames(tmpFoodNames)
                     tmpMacrosList.push(macros)
                 })
+                console.log(tmpFoodNames)
+                setSearchFoodNames(tmpFoodNames)
                 setSearchFoodMacros(tmpMacrosList)
             })
             .catch(error => {
                 console.error('There was a problem with your search:', error);
             });
         }
-        setProcess('')
     }
 
     // Fetch the list of foods and calories that the user has added
     const foodsRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/foodNames')
     const caloriesRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/calorieCounts')
     const proteinRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/proteinCounts')
+    const fatsRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/fatCounts')
+    const carbsRef = ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/carbCounts')
     useEffect(() => {
         onValue(foodsRef, (snapshot) => {
             data = snapshot.val()
@@ -118,6 +124,26 @@ export default function FoodLog({navigation}) {
                 setProteinCounts(tmpProtein)
             }
         })  
+        onValue(fatsRef, (snapshot) => {
+            data = snapshot.val()
+            tmpFats = []
+            if (data) {
+                for (let i = 0; i < Object.keys(data).length; i++) {
+                    tmpFats.push(data[Object.keys(data)[i]]['fat'])
+                }
+                setFatCounts(tmpFats)
+            }
+        })  
+        onValue(carbsRef, (snapshot) => {
+            data = snapshot.val()
+            tmpCarbs = []
+            if (data) {
+                for (let i = 0; i < Object.keys(data).length; i++) {
+                    tmpCarbs.push(data[Object.keys(data)[i]]['carb'])
+                }
+                setCarbCounts(tmpCarbs)
+            }
+        })  
     }, [])
 
     // Change the current day to log
@@ -129,18 +155,22 @@ export default function FoodLog({navigation}) {
     }, []);
 
     // Upload food to the database
-    function uploadFoodToDB(typeFood, numCalories, gramsProtein) {
+    function uploadFoodToDB(typeFood, numCalories, gramsProtein, gramsFat, gramsCarb) {
         const newRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/logs/' + day + '/foods'))
         update(newRef, {
             food: typeFood,
             calories: numCalories,
-            protein: gramsProtein
+            protein: gramsProtein,
+            fat: gramsFat,
+            carb: gramsCarb
         }).catch((error) => {
             alert(error);
         });
         const foodsRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/foodNames'))
         const caloriesRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/calorieCounts'))
         const proteinRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/proteinCounts'))
+        const fatsRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/fatCounts'))
+        const carbsRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/carbCounts'))
         // If the food is not already stored in any of the users logs, add it to the comprehensive list 
         if (!foodNames.includes(typeFood)) {
             update(foodsRef, {
@@ -160,6 +190,18 @@ export default function FoodLog({navigation}) {
             }).catch((error) => {
                 alert(error);
             });
+
+            update(fatsRef, {
+                fat: gramsFat
+            }).catch((error) => {
+                alert(error);
+            });
+
+            update(carbsRef, {
+                carb: gramsCarb
+            }).catch((error) => {
+                alert(error);
+            });
         }
     }
 
@@ -176,13 +218,10 @@ export default function FoodLog({navigation}) {
             <View style={styles.container}>
                 <View style={styles.buttonContainer}>
                     <>
-                        <TextInput style={styles.input} placeholder='  Food: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setFood(newFood)} defaultValue={food}/>
-                        <TextInput style={styles.input} placeholder='  Calories: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setCalories(newCalories)} defaultValue={calories}/>
-                        <TextInput style={styles.input} placeholder='  Protein: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newProtein => setProtein(newProtein)} defaultValue={protein}/>
-                        <TouchableOpacity style={styles.button} onPress={() => uploadFoodToDB(food, calories, protein)}>
+                        <TouchableOpacity style={styles.button} onPress={() =>setLogNewMealVisible(true)}>
                             <Text style={styles.text}>
-                                Log this Meal
-                            </Text>
+                                Input a New Meal
+                        </Text>
                         </TouchableOpacity>
                         <TouchableOpacity style={styles.button} onPress={() => setFoodLogModal(true)}>
                             <Text style={styles.text}>Import meal from your food logs</Text>
@@ -195,15 +234,24 @@ export default function FoodLog({navigation}) {
                     </>
                     <Modal visible={foodLogModal} animationType='fade' presentationStyle='overFullScreen'>
                         <View style={styles.modalContainer}>
-                            <ScrollView style={styles.modalFoodLog} contentContainerStyle={{justifyContent: 'flex-start', alignItems: 'flex-start',}}>
+                            <ScrollView style={styles.modalFoodLog} contentContainerStyle={{justifyContent: 'flex-start', alignItems: 'flex-start'}}>
                                 {foodNames.length > 0 ? foodNames.map((food, index) => {
                                     return (
-                                        <TouchableOpacity key={index} onPress={() => pickFoodToLog(food, calorieCounts[index], proteinCounts[index])}>
+                                        <TouchableOpacity key={index} onPress={() => {pickFoodToLog(food, calorieCounts[index], proteinCounts[index]); setShowSearchModal(false)}}>
                                             <Text style={styles.food}>
                                                 {food}
                                             </Text> 
                                             <Text style={styles.calories}>
+                                                {proteinCounts[index]}
+                                            </Text>
+                                            <Text style={styles.calories}>
                                                 {calorieCounts[index]}
+                                            </Text>
+                                            <Text style={styles.calories}>
+                                                {fatCounts[index]}
+                                            </Text>
+                                            <Text style={styles.calories}>
+                                                {carbCounts[index]}
                                             </Text>
                                         </TouchableOpacity>
                                     )
@@ -211,7 +259,7 @@ export default function FoodLog({navigation}) {
                                     <Text style={styles.text}>You have no foods logged!</Text>
                                 }
                             </ScrollView>
-                            <TouchableOpacity style={styles.backButton} onPress={() => navigation.reset({index: 0, routes: [{name: 'Logger'}]})}>
+                            <TouchableOpacity style={styles.backButton} onPress={() => setShowSearchModal(false)}>
                                 <Text style={styles.text}>Back</Text>
                             </TouchableOpacity>
                         </View>
@@ -222,30 +270,54 @@ export default function FoodLog({navigation}) {
                             <TouchableOpacity style={styles.searchButton} onPress={() => searchFoodDatabase(search)}>
                                 <Text style={styles.text}>Search Food Database</Text>
                             </TouchableOpacity>
-                            {process == 'Searching' && 
-                            <>
-                                <Text style={styles.text}>{process}</Text>
-                                <ActivityIndicator size="small" style={{marginLeft: 5}}/>
-                            </>
-                            }
                             <ScrollView style={styles.searchModalFoodLog} contentContainerStyle={{justifyContent: 'flex-start', alignItems: 'flex-start',}}>
-                                {searchFoodNames.length > 0 ? searchFoodNames.map((food, index) => {
+                                {searchFoodNames ? searchFoodNames.map((food, index) => {
                                     return (
-                                        <TouchableOpacity key={index} onPress={() => pickFoodToLog(food, calorieCounts[index], proteinCounts[index])}>
+                                        <TouchableOpacity style={{paddingBottom: 5, width: '100%'}} key={index} onPress={() => pickFoodToLog(food, searchFoodMacros[index][3], searchFoodMacros[index][0], searchFoodMacros[index][1], searchFoodMacros[index][2])}>
                                             <Text style={styles.food}>
                                                 {food}
                                             </Text> 
-                                            <Text style={styles.calories} key={index}>
-                                                {searchFoodMacros[index]}
-                                            </Text>
+                                            <View key={index}>
+                                                <Text style={styles.calories}>
+                                                    {searchFoodMacros[index][0]}
+                                                </Text>
+                                                <Text style={styles.calories}>
+                                                    {searchFoodMacros[index][1]}
+                                                </Text>
+                                                <Text style={styles.calories}>
+                                                    {searchFoodMacros[index][2]}
+                                                </Text>
+                                                <Text style={styles.calories}>
+                                                    {searchFoodMacros[index][3]}
+                                                </Text>
+                                            </View>
                                         </TouchableOpacity>
                                     )
                                 }) :
                                     <Text style={styles.text}>You have no foods logged!</Text>
                                 }
                             </ScrollView>
-                            <TouchableOpacity style={styles.backButton} onPress={() => {setShowSearchModal(false); setSearchFoodMacros([]); setSearchFoodNames([])}}>
+                            <TouchableOpacity style={styles.backButton} onPress={() => setShowSearchModal(false)}>
                                 <Text style={styles.text}>Back</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </Modal>
+                    <Modal visible={logNewMealVisible}>
+                        <View style={styles.modalContainer}>
+                            <TextInput style={styles.input} placeholder='  Food: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setFood(newFood)} defaultValue={food}/>
+                            <TextInput style={styles.input} placeholder='  Calories: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setCalories(newCalories)} defaultValue={calories}/>
+                            <TextInput style={styles.input} placeholder='  Protein: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newProtein => setProtein(newProtein)} defaultValue={protein}/>
+                            <TextInput style={styles.input} placeholder='  Fat: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFat => setFat(newFat)} defaultValue={fat}/>
+                            <TextInput style={styles.input} placeholder='  Carbs: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCarbs => setCarbs(newCarbs)} defaultValue={carbs}/>
+                            <TouchableOpacity style={styles.button} onPress={() => {uploadFoodToDB(food, calories, protein, fat, carbs); setLogNewMealVisible(false)}}>
+                                <Text style={styles.text}>
+                                    Log this Meal
+                                </Text>
+                            </TouchableOpacity>
+                            <TouchableOpacity style={styles.button} onPress={() => setLogNewMealVisible(false)}>
+                                <Text style={styles.text}>
+                                    Back
+                                </Text>
                             </TouchableOpacity>
                         </View>
                     </Modal>
@@ -291,7 +363,7 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         width: 320,
         paddingLeft: 20,
-        height: '10%',
+        height: '7%',
         display: 'flex',
         justifyContent: 'center',
         alignItems: 'center',

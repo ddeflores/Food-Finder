@@ -224,13 +224,17 @@ export default function UploadPicture({navigation}) {
     update(newRef, {
         food: typeFood,
         calories: numCalories,
-        protein: gramsProtein
+        protein: gramsProtein,
+        fat: 'N/A',
+        carbs: 'N/A'
     }).catch((error) => {
         alert(error);
     });
     const foodsRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/foodNames'))
     const caloriesRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/calorieCounts'))
     const proteinRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/proteinCounts'))
+    const fatsRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/fatCounts'))
+    const carbsRef = push(ref(FIREBASE_DB, 'users/' + FIREBASE_AUTH.currentUser.uid + '/carbCounts'))
     // If the food is not already stored in any of the users logs, add it to the comprehensive list 
     if (!foodNames.includes(typeFood)) {
         update(foodsRef, {
@@ -247,9 +251,21 @@ export default function UploadPicture({navigation}) {
 
         update(proteinRef, {
           protein: gramsProtein
-      }).catch((error) => {
-          alert(error);
-      });
+        }).catch((error) => {
+            alert(error);
+        });
+
+        update(fatsRef, {
+          fat: 'N/A'
+        }).catch((error) => {
+            alert(error);
+        });
+
+        update(carbsRef, {
+          carb: 'N/A'
+        }).catch((error) => {
+            alert(error);
+        });
     }
 }
 
