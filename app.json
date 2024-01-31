@@ -1,7 +1,7 @@
 {
   "expo": {
     "name": "Food-Finder",
-    "slug": "Food-Finder",
+    "slug": "foodfinder",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./placeholder.png",

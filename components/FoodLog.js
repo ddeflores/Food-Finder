@@ -215,7 +215,7 @@ export default function FoodLog({navigation}) {
                 if (editVisible) {
                   return (
                     <View style={styles.editMode} key={index}>
-                      <View>
+                      <View style={styles.foodInformation}>
                           <Text style={styles.food}>
                             {food}
                           </Text> 
@@ -245,7 +245,7 @@ export default function FoodLog({navigation}) {
                 }
                 else {
                   return (
-                    <View key={index}>
+                    <View key={index} style={styles.foodInformation}>
                       <Text style={styles.food}> 
                         {food}
                       </Text>
@@ -427,5 +427,8 @@ const styles = StyleSheet.create({
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between'
+    },
+    foodInformation: {
+      width: '50%'
     }
 });

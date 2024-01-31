@@ -207,10 +207,12 @@ export default function FoodLog({navigation}) {
     }
 
     // When a user chooses a food from the import modal, switch back to the regular logging screen with the chosen food inside of the input
-    function pickFoodToLog(foodName, numCalories, numProtein) {
+    function pickFoodToLog(foodName, numCalories, numProtein, gramsFat, gramsCarb) {
         setFood(foodName)
         setCalories(numCalories)
         setProtein(numProtein)
+        setFat(gramsFat)
+        setCarbs(gramsCarb)
         setFoodLogModal(false)
     }
 
@@ -238,21 +240,21 @@ export default function FoodLog({navigation}) {
                             <ScrollView style={styles.modalFoodLog} contentContainerStyle={{justifyContent: 'flex-start', alignItems: 'flex-start'}}>
                                 {foodNames.length > 0 ? foodNames.map((food, index) => {
                                     return (
-                                        <TouchableOpacity key={index} onPress={() => {pickFoodToLog(food, calorieCounts[index], proteinCounts[index]); setShowSearchModal(false)}}>
+                                        <TouchableOpacity key={index} onPress={() => {uploadFoodToDB(food, calorieCounts[index][1], proteinCounts[index], fatCounts[index], carbCounts[index])}}>
                                             <Text style={styles.food}>
                                                 {food}
                                             </Text> 
                                             <Text style={styles.calories}>
-                                                {proteinCounts[index]}
+                                                {proteinCounts[index]} g Protein
                                             </Text>
                                             <Text style={styles.calories}>
-                                                {calorieCounts[index]}
+                                                {calorieCounts[index]} calories
                                             </Text>
                                             <Text style={styles.calories}>
-                                                {fatCounts[index]}
+                                                {fatCounts[index]} g fat
                                             </Text>
                                             <Text style={styles.calories}>
-                                                {carbCounts[index]}
+                                                {carbCounts[index]} g carbs
                                             </Text>
                                         </TouchableOpacity>
                                     )
@@ -260,7 +262,7 @@ export default function FoodLog({navigation}) {
                                     <Text style={styles.text}>You have no foods logged!</Text>
                                 }
                             </ScrollView>
-                            <TouchableOpacity style={styles.backButton} onPress={() => setShowSearchModal(false)}>
+                            <TouchableOpacity style={styles.backButton} onPress={() => setFoodLogModal(false)}>
                                 <Text style={styles.text}>Back</Text>
                             </TouchableOpacity>
                         </View>
@@ -274,7 +276,7 @@ export default function FoodLog({navigation}) {
                             <ScrollView style={styles.searchModalFoodLog} contentContainerStyle={{justifyContent: 'flex-start', alignItems: 'flex-start',}}>
                                 {(searchFoodNames.length > 0 && searchFoodNames.length === searchFoodMacros.length) ? searchFoodNames.map((food, index) => {
                                     return (
-                                        <TouchableOpacity style={{paddingBottom: 5, width: '100%'}} key={index} onPress={() => pickFoodToLog(food, searchFoodMacros[index][3], searchFoodMacros[index][0], searchFoodMacros[index][1], searchFoodMacros[index][2])}>
+                                        <TouchableOpacity style={{paddingBottom: 5, width: '100%'}} key={index} onPress={() => {uploadFoodToDB(food, searchFoodMacros[index][3][1].toString(), searchFoodMacros[index][0][1].toString(), searchFoodMacros[index][1][1].toString(), searchFoodMacros[index][2][1].toString())}}>
                                             <Text style={styles.food}>
                                                 {food}
                                             </Text> 
@@ -303,7 +305,7 @@ export default function FoodLog({navigation}) {
                             </TouchableOpacity>
                         </View>
                     </Modal>
-                    <Modal visible={logNewMealVisible}>
+                    <Modal visible={logNewMealVisible} animationType='fade'>
                         <View style={styles.modalContainer}>
                             <TextInput style={styles.input} placeholder='  Food: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setFood(newFood)} defaultValue={food}/>
                             <TextInput style={styles.input} placeholder='  Calories: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setCalories(newCalories)} defaultValue={calories}/>

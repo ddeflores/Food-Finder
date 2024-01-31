@@ -24,7 +24,7 @@ export default function SignUp({navigation}) {
       });
     }
     else {
-      alert('Passwrds do not match!');
+      alert('Passwords do not match!');
     }
   }
   

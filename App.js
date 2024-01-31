@@ -17,13 +17,12 @@ import Settings from './components/Settings.js';
 
 export default function App() {
   const [initialRoute, setInitialRoute] = useState('Home');
-  const [displayMode, setDisplayMode] = useState('dark')
 
   // If a user is logged in, make sure they dont get directed to the login home page
   useEffect(() => {
     FIREBASE_AUTH.onAuthStateChanged(function(user) {
       if (user) {
-        setInitialRoute('FoodLog');
+        setInitialRoute('Logger');
       }
       else {
         setInitialRoute('Home');
