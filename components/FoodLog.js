@@ -12,10 +12,15 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import NavBar from './NavBar';
 
 export default function FoodLog({navigation}) {
+  // NavBar prop
     const component = 'FoodLog'
+    // For displaying logs
     const [foods, setFoods] = useState([])
     const [calories, setCalories] = useState([])
     const [protein, setProtein] = useState([])
+    const [fats, setFats] = useState([])
+    const [carbs, setCarbs] = useState([])
+
     const [day, setDay] = useState(new Date().toDateString())
     const [dayMenuVisible, setDayMenuVisible] = useState(false)
     const [editVisible, setEditVisible] = useState(false)
@@ -24,6 +29,8 @@ export default function FoodLog({navigation}) {
     const [editedFoodName, setEditedFoodName] = useState('')
     const [editedCalories, setEditedCalories] = useState('')
     const [editedProtein, setEditedProtein] = useState('')
+    const [editedFat, setEditedFat] = useState('')
+    const [editedCarb, setEditedCarb] = useState('')
     const [editIndex, setEditIndex] = useState(null)
 
     // Initially show the food log, and update it whenever the date changes
@@ -40,17 +47,23 @@ export default function FoodLog({navigation}) {
         let tmpFoods = []
         let tmpCalories = []
         let tmpProtein = []
+        let tmpFats = []
+        let tmpCarbs = []
         // Traverse through each key and add the food and calories to their respective arrays if there is a log on that day
         if (data) {
           for (let i = 0; i < Object.keys(data).length; i++) {
             tmpFoods.push((data[Object.keys(data)[i]]['food']))
             tmpCalories.push((data[Object.keys(data)[i]]['calories']))
             tmpProtein.push((data[Object.keys(data)[i]]['protein']))
+            tmpFats.push((data[Object.keys(data)[i]]['fat']))
+            tmpCarbs.push((data[Object.keys(data)[i]]['carb']))
           }
           // Map each food and calories pair to the new food log, and update the state of the current food log
           setFoods(tmpFoods)
           setCalories(tmpCalories)
           setProtein(tmpProtein)
+          setFats(tmpFats)
+          setCarbs(tmpCarbs)
         }
         else {
           setFoods(['No Log on\n' + day])
@@ -73,12 +86,20 @@ export default function FoodLog({navigation}) {
       newProtein.splice(index, 1)
       setProtein(newProtein)
 
+      const newFats = [...fats]
+      newFats.splice(index, 1)
+      setFats(newFats)
+
+      const newCarbs = [...carbs]
+      newCarbs.splice(index, 1)
+      setCarbs(newCarbs)
+
       setFoodLogChanged(true)
     }
 
     // Display user edits for a food locally, but not on the database
-    function editFoodLocally(index, foodEdit, caloriesEdit, proteinEdit) {
-      if (editedFoodName !== '' && editedCalories !== '' && editedProtein !== '') {
+    function editFoodLocally(index, foodEdit, caloriesEdit, proteinEdit, fatEdit, carbEdit) {
+      if (editedFoodName !== '' && editedCalories !== '' && editedProtein !== '' && editedCarb !== '' && editedFat !== '') {
           // Edit foods list
           const newFoods = [...foods]
           newFoods.splice(index, 1, foodEdit)
@@ -96,6 +117,16 @@ export default function FoodLog({navigation}) {
           newProtein.splice(index, 1, proteinEdit)
           setProtein(newProtein)
 
+          // Edit fat list
+          const newFats = [...fats]
+          newFats.splice(index, 1, fatEdit)
+          setFats(newFats)
+
+          // Edit carb list
+          const newCarbs = [...carbs]
+          newCarbs.splice(index, 1, carbEdit)
+          setCarbs(newCarbs)
+
           // Reset states
           setFoodLogChanged(true)
           setFoodLogEditMode(false)
@@ -103,6 +134,8 @@ export default function FoodLog({navigation}) {
           setEditedFoodName('')
           setEditedCalories('')
           setEditedProtein('')
+          setEditedFat('')
+          setEditedCarb('')
       }
     }
 
@@ -115,7 +148,9 @@ export default function FoodLog({navigation}) {
           update(newRef, {
               food: typeFood,
               calories: calories[index],
-              protein: protein[index]
+              protein: protein[index],
+              fat: fats[index],
+              carb: carbs[index]
           }).catch((error) => {
               alert(error);
           })
@@ -161,11 +196,16 @@ export default function FoodLog({navigation}) {
             <Modal visible={foodLogEditMode} animationType='fade'>
               <View style={styles.modalContainer}>
                 <View style={{alignItems: 'center', justifyContent: 'center'}}>
-                  <TextInput style={styles.input} placeholder='  New Food Name:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setEditedFoodName(newFood)} defaultValue={editedFoodName}/>
-                  <TextInput style={styles.input} placeholder='  New Calorie Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setEditedCalories(newCalories)} defaultValue={editedCalories}/>
-                  <TextInput style={styles.input} placeholder='  New Protein Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newProtein => setEditedProtein(newProtein)} defaultValue={editedProtein}/>
-                  <TouchableOpacity style={styles.button} onPress={() => editFoodLocally(editIndex, editedFoodName, editedCalories, editedProtein)}>
+                  <TextInput style={styles.editInput} placeholder='  New Food Name:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFood => setEditedFoodName(newFood)} defaultValue={editedFoodName}/>
+                  <TextInput style={styles.editInput} placeholder='  New Calorie Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCalories => setEditedCalories(newCalories)} defaultValue={editedCalories}/>
+                  <TextInput style={styles.editInput} placeholder='  New Protein Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newProtein => setEditedProtein(newProtein)} defaultValue={editedProtein}/>
+                  <TextInput style={styles.editInput} placeholder='  New Fat Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFat => setEditedFat(newFat)} defaultValue={editedFat}/>
+                  <TextInput style={styles.editInput} placeholder='  New Carb Count:' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCarb => setEditedCarb(newCarb)} defaultValue={editedCarb}/>
+                  <TouchableOpacity style={styles.editModeButton} onPress={() => editFoodLocally(editIndex, editedFoodName, editedCalories, editedProtein, editedFat, editedCarb)}>
                       <Text style={styles.text}>Confirm Changes</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.editModeButton} onPress={() => setFoodLogEditMode(false)}>
+                      <Text style={styles.text}>Back</Text>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -184,6 +224,12 @@ export default function FoodLog({navigation}) {
                           </Text> 
                           <Text style={styles.calories}>
                             {!food.includes('No Log on') ? protein[index] + 'g protein' : ''}
+                          </Text>
+                          <Text style={styles.calories}>
+                            {!food.includes('No Log on') ? fats[index] + 'g fat' : ''}
+                          </Text> 
+                          <Text style={styles.calories}>
+                            {!food.includes('No Log on') ? carbs[index] + 'g carbs' : ''}
                           </Text> 
                       </View>
                       <View style={{flexDirection: 'row'}}>
@@ -208,6 +254,12 @@ export default function FoodLog({navigation}) {
                       </Text>
                       <Text style={styles.calories}>
                         {!food.includes('No Log on') ? protein[index] + 'g protein' : ''}
+                      </Text> 
+                      <Text style={styles.calories}>
+                        {!food.includes('No Log on') ? fats[index] + 'g fat' : ''}
+                      </Text> 
+                      <Text style={styles.calories}>
+                        {!food.includes('No Log on') ? carbs[index] + 'g carbs' : ''}
                       </Text> 
                     </View>
                   )
@@ -275,6 +327,16 @@ const styles = StyleSheet.create({
       display: 'flex',
       justifyContent: 'center',
       alignItems: 'center',
+    },
+    editModeButton: {
+      marginTop: 8,
+      backgroundColor: "#3A3B3C",
+      borderRadius: 18,
+      width: 150,
+      height: 50,
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
   },
     backButton: {
         marginTop: 10,
@@ -301,6 +363,20 @@ const styles = StyleSheet.create({
         fontSize: 16,
         fontWeight: '100'
     },
+    editInput: {
+      marginTop: 10,
+      backgroundColor: "#3A3B3C",
+      borderRadius: 18,
+      width: 320,
+      paddingLeft: 20,
+      height: '10%',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
+      color: 'white',
+      fontSize: 16,
+      fontWeight: '100'
+  },
     text: {
         color: "white",
         fontSize: 'auto',
