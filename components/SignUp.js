@@ -1,6 +1,6 @@
 // React and react native imports
 import { useState, useEffect } from 'react';
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, Text, TextInput, Pressable, View } from 'react-native'
 
 // Local components and configs
 import { FIREBASE_AUTH } from '../firebaseConfig.js';
@@ -39,14 +39,14 @@ export default function SignUp({navigation}) {
           <TextInput style={styles.input} placeholder='  Email: ' placeholderTextColor={'white'} onChangeText={newEmail => setEmail(newEmail)} defaultValue={email} autoCapitalize='none' />
           <TextInput style={styles.input} secureTextEntry={true} placeholder='  Password: ' placeholderTextColor={'white'} onChangeText={newPassword => setPassword(newPassword)} defaultValue={password} autoCapitalize='none'/>
           <TextInput style={styles.input} secureTextEntry={true} placeholder='  Confirm Password: ' placeholderTextColor={'white'} onChangeText={newPassword => setConfirmedPassword(newPassword)} defaultValue={confirmedPassword} autoCapitalize='none'/>
-          <TouchableOpacity style={styles.button} onPress={() => handleSignUp(FIREBASE_AUTH, email, password)}>
+          <Pressable style={styles.button} onPress={() => handleSignUp(FIREBASE_AUTH, email, password)}>
             <Text style={styles.text}>
               Sign Up
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+          </Pressable>
+          <Pressable style={styles.backButton} onPress={() => navigation.goBack()}>
             <Text style={styles.text}>Back</Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </View>

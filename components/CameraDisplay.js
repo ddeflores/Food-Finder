@@ -1,6 +1,6 @@
 // React and react native imports
 import { useState, useRef } from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, Pressable, View } from 'react-native';
 
 // Third party libraries
 import { Camera, CameraType } from 'expo-camera';
@@ -36,9 +36,9 @@ function CameraDisplay({ permission, requestionPermission, onPhotoTaken, onExit 
             <View style={styles.permissionContainer}>
                 <Text>No Camera Permission</Text>
                 <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={requestionPermission}>
+                    <Pressable style={styles.button} onPress={requestionPermission}>
                         <Text>Update Permissions</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                 </View>
             </View>
         );
@@ -52,14 +52,14 @@ function CameraDisplay({ permission, requestionPermission, onPhotoTaken, onExit 
                 ref={cameraRef}
                 onCameraReady={onCameraReady}>
                 <View style={styles.exitButton}>
-                    <TouchableOpacity style={styles.exitButton} onPress={onExit}>
+                    <Pressable style={styles.exitButton} onPress={onExit}>
                         <Text style={styles.text}>Exit</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                 </View>
                 <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={takePicture}>
+                    <Pressable style={styles.button} onPress={takePicture}>
                         <Text style={styles.text}>Take Photo</Text>
-                    </TouchableOpacity>
+                    </Pressable>
                 </View>
             </Camera>
         </View>

@@ -1,6 +1,6 @@
 // React and react native imports
 import React from 'react';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, Pressable, View } from 'react-native';
 
 export default function HomeScreen({navigation}) {
 
@@ -11,16 +11,16 @@ export default function HomeScreen({navigation}) {
           FoodFinder
         </Text>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
+          <Pressable style={styles.button} onPress={() => navigation.navigate('Login')}>
             <Text style={styles.text}>
               Login
             </Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('SignUp')}>
+          </Pressable>
+          <Pressable style={styles.button} onPress={() => navigation.navigate('SignUp')}>
             <Text style={styles.text}>
               Sign Up
             </Text>
-          </TouchableOpacity>
+          </Pressable>
         </View>
       </View>
     </View>

@@ -1,6 +1,6 @@
 // React and react native imports
 import { useState, useEffect, useRef } from 'react';
-import { Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { Modal, StyleSheet, Text, TextInput, Pressable, View } from 'react-native'
 import { ScrollView } from 'react-native';
 
 // Third party libraries
@@ -217,12 +217,12 @@ export default function FoodLog({navigation}) {
               <View style={styles.modalContainer}>
                 <DateTimePicker maximumDate={new Date()} dateFormat="dayofweek day month" mode="date" value={new Date(day)} display='spinner' onChange={setDate}/>
                 <View style={{flexDirection: 'row', justifyContent: 'space-evenly', alignItems: 'center'}}>
-                  <TouchableOpacity style={{marginHorizontal: 50}} onPress={() => {setDay(new Date().toDateString()); setDayMenuVisible(false)}}>
+                  <Pressable style={{marginHorizontal: 50}} onPress={() => {setDay(new Date().toDateString()); setDayMenuVisible(false)}}>
                     <Text style={{paddingBottom: 20, color: 'white', fontWeight: 'bold', fontSize: 16}}>Reset</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={{marginHorizontal: 50}} onPress={() => setDayMenuVisible(false)}>
+                  </Pressable>
+                  <Pressable style={{marginHorizontal: 50}} onPress={() => setDayMenuVisible(false)}>
                     <Text style={{paddingBottom: 20, color: 'white', fontWeight: 'bold', fontSize: 16}}>Update</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </View>
             </Modal>
@@ -234,12 +234,12 @@ export default function FoodLog({navigation}) {
                   <TextInput style={styles.editInput} placeholder={protein[editIndex] + ': Protein'} placeholderTextColor='white' onChangeText={newProtein => setEditedProtein(newProtein)} value={editedProtein}/>
                   <TextInput style={styles.editInput} placeholder={fats[editIndex] + ': Fat'} placeholderTextColor='white' onChangeText={newFat => setEditedFat(newFat)} value={editedFat}/>
                   <TextInput style={styles.editInput} placeholder={carbs[editIndex] + ': Carbs'} placeholderTextColor='white' onChangeText={newCarb => setEditedCarb(newCarb)} value={editedCarb}/>
-                  <TouchableOpacity style={styles.editModeButton} onPress={() => editFoodLocally(editIndex, editedFoodName, editedCalories, editedProtein, editedFat, editedCarb)}>
+                  <Pressable style={styles.editModeButton} onPress={() => editFoodLocally(editIndex, editedFoodName, editedCalories, editedProtein, editedFat, editedCarb)}>
                       <Text style={styles.text}>Confirm Changes</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity style={styles.editModeButton} onPress={() => setFoodLogEditMode(false)}>
+                  </Pressable>
+                  <Pressable style={styles.editModeButton} onPress={() => setFoodLogEditMode(false)}>
                       <Text style={styles.text}>Back</Text>
-                  </TouchableOpacity>
+                  </Pressable>
                 </View>
               </View>
             </Modal>
@@ -266,12 +266,12 @@ export default function FoodLog({navigation}) {
                           </Text> 
                       </View>
                       <View style={{flexDirection: 'row'}}>
-                        <TouchableOpacity style={styles.editButton} onPress={() => {setFoodLogEditMode(true); setEditIndex(index)}}>
+                        <Pressable style={styles.editButton} onPress={() => {setFoodLogEditMode(true); setEditIndex(index)}}>
                           <Text style={styles.editText}>Edit</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.editButton} onPress={() => deleteFoodLocally(index)}>
+                        </Pressable>
+                        <Pressable style={styles.editButton} onPress={() => deleteFoodLocally(index)}>
                           <Text style={styles.editText}>Delete</Text>
-                        </TouchableOpacity>
+                        </Pressable>
                       </View>
                     </View>
                   )
@@ -305,12 +305,12 @@ export default function FoodLog({navigation}) {
                 </Text>
             </View>
             <View style={{flexDirection: 'row', justifyContent: 'space-around'}}>
-              <TouchableOpacity style={styles.button} disabled={editVisible} onPress={() => setDayMenuVisible(true)}>
+              <Pressable style={styles.button} disabled={editVisible} onPress={() => setDayMenuVisible(true)}>
                 <Text style={styles.text}>
                   Change day
                 </Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.button} onPress={() => confirmEdits()}>
+              </Pressable>
+              <Pressable style={styles.button} onPress={() => confirmEdits()}>
                 {editVisible &&
                   <Text style={styles.text}>
                     Confirm Changes
@@ -321,7 +321,7 @@ export default function FoodLog({navigation}) {
                     Edit Log
                   </Text>
                 }
-              </TouchableOpacity>
+              </Pressable>
             </View>
           </View>
         </View>

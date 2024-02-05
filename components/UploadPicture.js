@@ -1,15 +1,15 @@
 // React and react native imports
-import React, { useState, useEffect, createElement } from 'react';
-import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View, findNodeHandle } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { ActivityIndicator, Image, Modal, StyleSheet, Text, TextInput, Pressable, View } from 'react-native';
 import { ScrollView } from 'react-native';
 
 // Third party libraries
-import {Camera, useCameraPermissions } from 'expo-camera';
+import { Camera } from 'expo-camera';
 import * as FileSystem from 'expo-file-system';
 import * as ImagePicker from 'expo-image-picker';
 import * as tf from '@tensorflow/tfjs';
-import '@tensorflow/tfjs-react-native';
-import { bundleResourceIO, decodeJpeg } from '@tensorflow/tfjs-react-native';
+//import '@tensorflow/tfjs-react-native';
+//import { bundleResourceIO, decodeJpeg } from '@tensorflow/tfjs-react-native';
 import OpenAI from 'openai';
 import 'react-native-url-polyfill/auto';
 import { ref, update, push, onValue} from 'firebase/database'
@@ -308,12 +308,12 @@ export default function UploadPicture({navigation}) {
               <View style={styles.imageContainer}>
                 <Image source={currentImg} style={styles.img} accessibilityLabel="placeholder image" />
               </View>
-              <TouchableOpacity style={styles.button} onPress={pickImageAsync}>
+              <Pressable style={styles.button} onPress={pickImageAsync}>
                 <Text style={styles.text}>Upload Photo</Text>
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.button} onPress={() => setCameraVisible(true)}>
+              </Pressable>
+              <Pressable style={styles.button} onPress={() => setCameraVisible(true)}>
                 <Text style={styles.text}>Take Photo</Text>
-              </TouchableOpacity>
+              </Pressable>
               {/* When a picture is uploaded and no prediction has been made yet, display the loading symbol and current process */}
               {(currentImg !== placeholder && !prediction) &&
                 <View style={{marginTop: 10, flexDirection: 'row'}}>
@@ -330,33 +330,33 @@ export default function UploadPicture({navigation}) {
                 </View>
               }
               {prediction &&
-                <TouchableOpacity style={styles.button} onPress={() => setModalVisible(true)}>
+                <Pressable style={styles.button} onPress={() => setModalVisible(true)}>
                   <Text style={{color: 'white', fontSize: 16, fontWeight: '200',}}>Mistake? Click here to correct it</Text>
-                </TouchableOpacity>
+                </Pressable>
               }
               {prediction && prediction !== 'Not Food' &&
-                <TouchableOpacity style={styles.button} onPress={() => logFood(prediction)}>
+                <Pressable style={styles.button} onPress={() => logFood(prediction)}>
                   <Text style={styles.text}>Log Food</Text>
-                </TouchableOpacity>
+                </Pressable>
               }
               <Modal visible={modalVisible}>
                   <View style={styles.modalContainer}>
                       <TextInput style={styles.input} placeholder={'Type in the correct food here!'} placeholderTextColor={'white'} value={correction} onChangeText={(newCorrection) => setCorrection(newCorrection)}/>
-                      <TouchableOpacity style={styles.button} onPress={() => {openai_prediction(currentImg, correction); setModalVisible(false)}}>
+                      <Pressable style={styles.button} onPress={() => {openai_prediction(currentImg, correction); setModalVisible(false)}}>
                         <Text style={styles.text}>
                           Confirm
                         </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.button} onPress={() => setModalVisible(false)}>
+                      </Pressable>
+                      <Pressable style={styles.button} onPress={() => setModalVisible(false)}>
                         <Text style={styles.text}>
                           Back
                         </Text>
-                      </TouchableOpacity>
-                      <TouchableOpacity style={styles.button} onPress={() => {setModalVisible(false); openai_prediction(currentImg, '')}}>
+                      </Pressable>
+                      <Pressable style={styles.button} onPress={() => {setModalVisible(false); openai_prediction(currentImg, '')}}>
                           <Text style={styles.text}>
                             Retry with Same Image
                           </Text>
-                      </TouchableOpacity>
+                      </Pressable>
                   </View>
               </Modal>
             </View>

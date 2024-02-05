@@ -1,6 +1,6 @@
 // React and react native imports
 import React from 'react'
-import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native'
+import { StyleSheet, Text, TextInput, Pressable, View } from 'react-native'
 
 // Third party libraries
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons'
@@ -37,21 +37,21 @@ export default function NavBar({navigation, component}) {
 
   return (
     <View style={styles.container}>
-    <TouchableOpacity onPress={() => navigateToUploadPicture()} style={styles.iconContainer}> 
+    <Pressable onPress={() => navigateToUploadPicture()} style={styles.iconContainer}> 
         <Icon name="camera" size={40} style={{color: '#18191A'}} />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateToFoodLog()} style={styles.iconContainer}>
+      </Pressable>
+      <Pressable onPress={() => navigateToFoodLog()} style={styles.iconContainer}>
         <Icon name="notebook" size={40} style={{color: '#18191A'}} />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateToLogger()} style={styles.iconContainer}>
+      </Pressable>
+      <Pressable onPress={() => navigateToLogger()} style={styles.iconContainer}>
         <Icon name="home" size={40} style={{color: '#18191A'}} />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateToUploadPicture()} style={styles.iconContainer}> 
+      </Pressable>
+      <Pressable onPress={() => navigateToUploadPicture()} style={styles.iconContainer}> 
         <Icon name="run" size={40} style={{color: '#18191A'}} />
-      </TouchableOpacity>
-      <TouchableOpacity onPress={() => navigateToSettings()} style={styles.iconContainer}> 
+      </Pressable>
+      <Pressable onPress={() => navigateToSettings()} style={styles.iconContainer}> 
         <Icon name="cog" size={40} style={{color: '#18191A'}} />
-      </TouchableOpacity>
+      </Pressable>
     </View>
   )
 }

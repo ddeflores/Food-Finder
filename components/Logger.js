@@ -1,6 +1,6 @@
 // React and react native imports
 import { useEffect, useState } from 'react'
-import { Modal, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View, ActivityIndicator } from 'react-native'
+import { Modal, ScrollView, StyleSheet, Text, TextInput, Pressable, View, ActivityIndicator } from 'react-native'
 
 // Third party libraries
 import { ref, update, push, onValue } from "firebase/database"
@@ -11,7 +11,7 @@ import NavBar from './NavBar'
 import {FOOD_DB_API_KEY } from '@env'
 
 
-export default function FoodLog({navigation}, searchParameterFromPicture) {
+export default function FoodLog({navigation}) {
     // NavBar prop
     const component = 'Logger'
     // For logging via user input
@@ -226,26 +226,26 @@ export default function FoodLog({navigation}, searchParameterFromPicture) {
             <View style={styles.container}>
                 <View style={styles.buttonContainer}>
                     <>
-                        <TouchableOpacity style={styles.button} onPress={() =>setLogNewMealVisible(true)}>
+                        <Pressable style={styles.button} onPress={() =>setLogNewMealVisible(true)}>
                             <Text style={styles.text}>
                                 Input a New Meal
                         </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.button} onPress={() => setFoodLogModal(true)}>
+                        </Pressable>
+                        <Pressable style={styles.button} onPress={() => setFoodLogModal(true)}>
                             <Text style={styles.text}>Import meal from your food logs</Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity style={styles.button} onPress={() => setShowSearchModal(true)}>
+                        </Pressable>
+                        <Pressable style={styles.button} onPress={() => setShowSearchModal(true)}>
                             <Text style={styles.text}>
                                 Search For A Food
                             </Text>
-                        </TouchableOpacity>
+                        </Pressable>
                     </>
                     <Modal visible={foodLogModal} animationType='fade' presentationStyle='overFullScreen'>
                         <View style={styles.modalContainer}>
                             <ScrollView style={styles.modalFoodLog} contentContainerStyle={{justifyContent: 'flex-start', alignItems: 'flex-start'}}>
                                 {foodNames.length > 0 ? foodNames.map((food, index) => {
                                     return (
-                                        <TouchableOpacity key={index} onPress={() => {uploadFoodToDB(food, calorieCounts[index][1], proteinCounts[index], fatCounts[index], carbCounts[index])}}>
+                                        <Pressable key={index} onPress={() => {uploadFoodToDB(food, calorieCounts[index][1], proteinCounts[index], fatCounts[index], carbCounts[index])}}>
                                             <Text style={styles.food}>
                                                 {food}
                                             </Text> 
@@ -261,27 +261,27 @@ export default function FoodLog({navigation}, searchParameterFromPicture) {
                                             <Text style={styles.calories}>
                                                 {carbCounts[index]} g carbs
                                             </Text>
-                                        </TouchableOpacity>
+                                        </Pressable>
                                     )
                                 }) :
                                     <Text style={styles.text}>You have no foods logged!</Text>
                                 }
                             </ScrollView>
-                            <TouchableOpacity style={styles.backButton} onPress={() => setFoodLogModal(false)}>
+                            <Pressable style={styles.backButton} onPress={() => setFoodLogModal(false)}>
                                 <Text style={styles.text}>Back</Text>
-                            </TouchableOpacity>
+                            </Pressable>
                         </View>
                     </Modal>
                     <Modal visible={showSearchModal} animationType='fade' presentationStyle='overFullScreen'>
                         <View style={styles.searchModalContainer}>
                             <TextInput style={styles.searchInput} placeholder='  Search for a Food: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newSearch => setSearch(newSearch)} defaultValue={search}/>
-                            <TouchableOpacity style={styles.searchButton} onPress={() => searchFoodDatabase(search)}>
+                            <Pressable style={styles.searchButton} onPress={() => searchFoodDatabase(search)}>
                                 <Text style={styles.text}>Search Food Database</Text>
-                            </TouchableOpacity>
+                            </Pressable>
                             <ScrollView style={styles.searchModalFoodLog} contentContainerStyle={{justifyContent: 'flex-start', alignItems: 'flex-start',}}>
                                 {(searchFoodNames.length > 0 && searchFoodNames.length === searchFoodMacros.length) ? searchFoodNames.map((food, index) => {
                                     return (
-                                        <TouchableOpacity style={{paddingBottom: 5, width: '100%'}} key={index} onPress={() => {uploadFoodToDB(food, searchFoodMacros[index][3][1].toString(), searchFoodMacros[index][0][1].toString(), searchFoodMacros[index][1][1].toString(), searchFoodMacros[index][2][1].toString())}}>
+                                        <Pressable style={{paddingBottom: 5, width: '100%'}} key={index} onPress={() => {uploadFoodToDB(food, searchFoodMacros[index][3][1].toString(), searchFoodMacros[index][0][1].toString(), searchFoodMacros[index][1][1].toString(), searchFoodMacros[index][2][1].toString())}}>
                                             <Text style={styles.food}>
                                                 {food}
                                             </Text> 
@@ -299,15 +299,15 @@ export default function FoodLog({navigation}, searchParameterFromPicture) {
                                                     {searchFoodMacros[index][3]}
                                                 </Text>
                                             </View>
-                                        </TouchableOpacity>
+                                        </Pressable>
                                     )
                                 }) :
                                     <Text style={styles.text}>You have no foods logged!</Text>
                                 }
                             </ScrollView>
-                            <TouchableOpacity style={styles.backButton} onPress={() => setShowSearchModal(false)}>
+                            <Pressable style={styles.backButton} onPress={() => setShowSearchModal(false)}>
                                 <Text style={styles.text}>Back</Text>
-                            </TouchableOpacity>
+                            </Pressable>
                         </View>
                     </Modal>
                     <Modal visible={logNewMealVisible} animationType='fade'>
@@ -317,16 +317,16 @@ export default function FoodLog({navigation}, searchParameterFromPicture) {
                             <TextInput style={styles.input} placeholder='  Protein: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newProtein => setProtein(newProtein)} defaultValue={protein}/>
                             <TextInput style={styles.input} placeholder='  Fat: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newFat => setFat(newFat)} defaultValue={fat}/>
                             <TextInput style={styles.input} placeholder='  Carbs: ' placeholderTextColor={'white'} autoCapitalize='none' onChangeText={newCarbs => setCarbs(newCarbs)} defaultValue={carbs}/>
-                            <TouchableOpacity style={styles.button} onPress={() => {uploadFoodToDB(food, calories, protein, fat, carbs); setLogNewMealVisible(false)}}>
+                            <Pressable style={styles.button} onPress={() => {uploadFoodToDB(food, calories, protein, fat, carbs); setLogNewMealVisible(false)}}>
                                 <Text style={styles.text}>
                                     Log this Meal
                                 </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.button} onPress={() => setLogNewMealVisible(false)}>
+                            </Pressable>
+                            <Pressable style={styles.button} onPress={() => setLogNewMealVisible(false)}>
                                 <Text style={styles.text}>
                                     Back
                                 </Text>
-                            </TouchableOpacity>
+                            </Pressable>
                         </View>
                     </Modal>
                 </View>

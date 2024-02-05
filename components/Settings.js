@@ -1,6 +1,6 @@
 // React and react native imports
 import { useState } from 'react';
-import { Modal, StyleSheet, Switch, Text, TextInput, Touchable, TouchableOpacity, View } from 'react-native'
+import { Modal, StyleSheet, Switch, Text, TextInput, Touchable, Pressable, View } from 'react-native'
 
 // Third party libraries
 import { FIREBASE_AUTH } from '../firebaseConfig';
@@ -32,16 +32,16 @@ function Settings({navigation}) {
                 <Text style={styles.text}>Account Email:</Text>
                 <Text style={styles.infoText}>{FIREBASE_AUTH.currentUser.email}</Text>
                 <View style={styles.buttonContainer}>
-                    <TouchableOpacity style={styles.button} onPress={() => setLogoutPressed(true)}>
+                    <Pressable style={styles.button} onPress={() => setLogoutPressed(true)}>
                         <Text style={styles.text}>
                             Logout
                         </Text>
-                    </TouchableOpacity>
-                    <TouchableOpacity style={styles.button} onPress={() => handleReferral()}>
+                    </Pressable>
+                    <Pressable style={styles.button} onPress={() => handleReferral()}>
                         <Text style={styles.text}>
                             Tell a Friend
                         </Text>
-                    </TouchableOpacity>
+                    </Pressable>
                 </View>
             </View>
             <Modal visible={logoutPressed} animationType='fade'>
@@ -50,14 +50,14 @@ function Settings({navigation}) {
                                 Are you sure you want to Logout?
                             </Text>
                         <View style={styles.buttonContainer}>
-                            <TouchableOpacity style={styles.button} onPress={() => handleLogout()}>
+                            <Pressable style={styles.button} onPress={() => handleLogout()}>
                                 <Text style={styles.text}>
                                     Yes
                                 </Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={styles.button} onPress={() => setLogoutPressed(false)}>
+                            </Pressable>
+                            <Pressable style={styles.button} onPress={() => setLogoutPressed(false)}>
                                 <Text style={styles.text}>No, Take Me Back</Text>
-                            </TouchableOpacity>
+                            </Pressable>
                         </View>
                     </View>
             </Modal>
